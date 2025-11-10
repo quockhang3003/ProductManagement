@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/obj/Debug/net8.0/scopedcss/projectbundle/ProductManagement.WebUI.bundle.scp.css",
+      "PackagePath": "staticwebassets/ProductManagement.WebUI.bundle.scp.css"
+    },
+    {
+      "Id": "/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/wwwroot/app.css",
+      "PackagePath": "staticwebassets/app.css"
+    },
+    {
+      "Id": "/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/wwwroot/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/wwwroot/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.ProductManagement.WebUI.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.ProductManagement.WebUI.props",
+      "PackagePath": "build\\ProductManagement.WebUI.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.ProductManagement.WebUI.props",
+      "PackagePath": "buildMultiTargeting\\ProductManagement.WebUI.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.ProductManagement.WebUI.props",
+      "PackagePath": "buildTransitive\\ProductManagement.WebUI.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

@@ -1,0 +1,17 @@
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.csproj.AssemblyReference.cache
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.AssemblyInfoInputs.cache
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.AssemblyInfo.cs
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.csproj.CoreCompileInputs.cache
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/bin/Debug/net8.0/ProductManagement.Infrastructure.deps.json
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/bin/Debug/net8.0/ProductManagement.Infrastructure.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/bin/Debug/net8.0/ProductManagement.Infrastructure.pdb
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/bin/Debug/net8.0/ProductManagement.Application.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/bin/Debug/net8.0/ProductManagement.Domain.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/bin/Debug/net8.0/ProductManagement.Application.pdb
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/bin/Debug/net8.0/ProductManagement.Domain.pdb
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductM.6D34A66C.Up2Date
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/refint/ProductManagement.Infrastructure.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.pdb
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ref/ProductManagement.Infrastructure.dll

@@ -1,0 +1,11 @@
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/bin/Debug/net8.0/ProductManagement.Domain.deps.json
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/bin/Debug/net8.0/ProductManagement.Domain.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/bin/Debug/net8.0/ProductManagement.Domain.pdb
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/ProductManagement.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/ProductManagement.Domain.AssemblyInfoInputs.cache
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/ProductManagement.Domain.AssemblyInfo.cs
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/ProductManagement.Domain.csproj.CoreCompileInputs.cache
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/ProductManagement.Domain.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/refint/ProductManagement.Domain.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/ProductManagement.Domain.pdb
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Domain/obj/Debug/net8.0/ref/ProductManagement.Domain.dll

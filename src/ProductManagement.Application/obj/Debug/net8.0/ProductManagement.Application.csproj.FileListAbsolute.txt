@@ -13,3 +13,4 @@
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Application/obj/Debug/net8.0/refint/ProductManagement.Application.dll
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Application/obj/Debug/net8.0/ProductManagement.Application.pdb
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Application/obj/Debug/net8.0/ref/ProductManagement.Application.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Application/obj/Debug/net8.0/ProductManagement.Application.sourcelink.json

@@ -1,0 +1,13 @@
+namespace ProductManagement.Domain.Events;
+
+public record OrderCreatedEvent(
+    Guid OrderId,
+    string CustomerName,
+    string CustomerEmail,
+    decimal TotalAmount,
+    List<OrderItemData> Items
+) : IDomainEvent
+{
+    public Guid EventId { get; } = Guid.NewGuid();
+    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+}

@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "CgOFVC7zMcK78YAAxiT0btAN71zyvWYz4h9k5uS/5dQp5wSSAZ25tWP4mxBRIwymiZT5PCuYcbIxNxgd9w15Fw==",
+  "dgSpecHash": "Vd6Wz7zINifUdnn9hd/Zhyn/lR0rSH6hIaglp9+rlxEfUdfpIy0zXBEzDyhypsSim5sBrppsdtlVqJ9kuquJfQ==",
   "success": true,
   "projectFilePath": "/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Application/ProductManagement.Application.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/Users/quockhang/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.0/microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "/Users/quockhang/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.0/microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512"
+  ],
   "logs": []
 }

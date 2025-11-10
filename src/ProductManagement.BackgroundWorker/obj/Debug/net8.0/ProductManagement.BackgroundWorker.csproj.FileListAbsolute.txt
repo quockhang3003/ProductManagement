@@ -63,3 +63,4 @@
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.BackgroundWorker/obj/Debug/net8.0/ProductManagement.BackgroundWorker.pdb
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.BackgroundWorker/obj/Debug/net8.0/ProductManagement.BackgroundWorker.genruntimeconfig.cache
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.BackgroundWorker/obj/Debug/net8.0/ref/ProductManagement.BackgroundWorker.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.BackgroundWorker/obj/Debug/net8.0/ProductManagement.BackgroundWorker.sourcelink.json

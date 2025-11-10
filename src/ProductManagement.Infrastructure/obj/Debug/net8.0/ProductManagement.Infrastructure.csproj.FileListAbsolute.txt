@@ -15,3 +15,4 @@
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/refint/ProductManagement.Infrastructure.dll
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.pdb
 /Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ref/ProductManagement.Infrastructure.dll
+/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.Infrastructure/obj/Debug/net8.0/ProductManagement.Infrastructure.sourcelink.json

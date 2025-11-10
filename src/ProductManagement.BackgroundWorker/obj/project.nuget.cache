@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "9Z3nNIHyTOjz2d+jgI2/PGJg6T80rKsjVa146hf2ITtRcddCqmNg6WyqmCJPHhy1ZGdq0+4HRZNqrDGPaJpiVw==",
+  "dgSpecHash": "p8oVXKaR5Kdsurh2U87JKG1dCNgVdNVkZVcmj9lcAnnKdafz3z/X6Apuk0fq7UiHFlzPKhTj7nSOaSJhRYQJWQ==",
   "success": true,
   "projectFilePath": "/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.BackgroundWorker/ProductManagement.BackgroundWorker.csproj",
   "expectedPackageFiles": [

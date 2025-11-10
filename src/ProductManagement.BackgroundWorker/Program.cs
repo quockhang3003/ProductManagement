@@ -18,6 +18,6 @@ builder.Services.AddApplicationServices();
 
 // Add Hosted Services (Background Workers)
 builder.Services.AddHostedService<ProductEventWorker>();
-
+builder.Services.AddHostedService<OrderEventWorker>();
 var host = builder.Build();
 host.Run();

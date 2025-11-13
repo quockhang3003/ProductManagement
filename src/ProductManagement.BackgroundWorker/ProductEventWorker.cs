@@ -43,7 +43,7 @@ public class ProductEventWorker : BackgroundService
     private async Task HandleProductCreatedAsync(ProductCreatedEvent @event)
     {
         _logger.LogInformation(
-            "✅ Product Created: {ProductId} - {Name} - Price: {Price:C} - Stock: {Stock}",
+            "Product Created: {ProductId} - {Name} - Price: {Price:C} - Stock: {Stock}",
             @event.ProductId, @event.Name, @event.Price, @event.Stock);
 
         // TODO: Implement business logic

@@ -63,7 +63,7 @@ builder.Services.AddRateLimiter(options =>
         if (!context.HttpContext.Response.HasStarted)
         {
             await context.HttpContext.Response.WriteAsync(
-                "❌ Too many requests, please slow down.", token);
+                "Too many requests, please slow down.", token);
         }
     };
 });

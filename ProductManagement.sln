@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{ABDEE44B-8D9
 		src\test_all.sh = src\test_all.sh
 		src\test_orders.sh = src\test_orders.sh
 		src\test_inventory.sh = src\test_inventory.sh
+		src\test_payment_promotion.sh = src\test_payment_promotion.sh
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductManagement.Domain", "src\ProductManagement.Domain\ProductManagement.Domain.csproj", "{9A6E8C92-C09A-4A5E-986A-25BF76F7B08E}"

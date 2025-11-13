@@ -20,6 +20,18 @@ public static class DependencyInjection
         services.AddSingleton<DapperContext>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IWarehouseRepository, WarehouseRepository>();
+        services.AddScoped<IInventoryItemRepository, InventoryItemRepository>();
+        services.AddScoped<IStockTransferRepository, StockTransferRepository>();
+        services.AddScoped<IInventoryAuditRepository, InventoryAuditRepository>();
+        
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IPaymentGatewayRepository, PaymentGatewayRepository>();
+        
+        // Promotion repositories
+        services.AddScoped<IPromotionRepository, PromotionRepository>();
+        services.AddScoped<IPromotionUsageRepository, PromotionUsageRepository>();
+        
         // RabbitMQ
         services.AddSingleton<IMessagePublisher, RabbitMQPublisher>();
         services.AddSingleton<IMessageConsumer, RabbitMQConsumer>();
@@ -56,6 +68,9 @@ public static class DependencyInjection
     {
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IPromotionService, PromotionService>();
         return services;
     }
 }

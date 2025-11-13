@@ -644,3 +644,4 @@ public class InventoryService : IInventoryService
 }
 public record OrderItemRequest(Guid ProductId, string ProductName, int Quantity);
 public record OrderItemAllocation(Guid ProductId, Guid WarehouseId, string WarehouseCode, int Quantity);
+

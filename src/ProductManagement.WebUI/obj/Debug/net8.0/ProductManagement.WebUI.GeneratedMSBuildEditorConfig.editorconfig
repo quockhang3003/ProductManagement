@@ -58,6 +58,54 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9fSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Admin/CandidateManagement.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL0FkbWluL0NhbmRpZGF0ZU1hbmFnZW1lbnQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Admin/CollectionsManagement.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL0FkbWluL0NvbGxlY3Rpb25zTWFuYWdlbWVudC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Admin/System_Configuration.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL0FkbWluL1N5c3RlbV9Db25maWd1cmF0aW9uLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/App.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL0FwcC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Pages/EducationPage.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL1BhZ2VzL0VkdWNhdGlvblBhZ2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL1BhZ2VzL0xvZ2luLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Pages/ProfilePhoto.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL1BhZ2VzL1Byb2ZpbGVQaG90by5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Pages/Register.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL1BhZ2VzL1JlZ2lzdGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Pages/ReviewPage.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL1BhZ2VzL1Jldmlld1BhZ2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Pages/WorkExperiencePage.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL1BhZ2VzL1dvcmtFeHBlcmllbmNlUGFnZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL1JvdXRlcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL19JbXBvcnRzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Components/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvTWFpbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-q7fxv2plrp
@@ -65,3 +113,11 @@ build_metadata.AdditionalFiles.CssScope = b-q7fxv2plrp
 [/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Components/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvTmF2TWVudS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-38wbgtwn86
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL0xheW91dC9NYWluTGF5b3V0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-1utipbwwke
+
+[/Users/quockhang/RiderProjects/ProductManagement/src/ProductManagement.WebUI/Recruitment/View/Components/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = UmVjcnVpdG1lbnQvVmlldy9Db21wb25lbnRzL0xheW91dC9OYXZNZW51LnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-vy9k2bwndb

@@ -1,0 +1,1203 @@
+﻿@page "/step2"
+@using System.ComponentModel.DataAnnotations
+@using Domain.DTO
+@using Domain.Entities
+@using Microsoft.AspNetCore.Components.Authorization
+@using Service
+@using System.Security.Claims
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JSRuntime
+@inject SessionService SessionService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="kpmg-header">
+    <div class="container">
+        <h1 class="kpmg-title">KPMG ONLINE APPLICATION</h1>
+    </div>
+</div>
+
+<div class="container">
+    @if (isCheckingAuth)
+    {
+        <div class="text-center p-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Checking authentication...</p>
+        </div>
+    }
+    else if (!isAuthenticated)
+    {
+        <div class="alert alert-warning">
+            <h4>Authentication Required</h4>
+            <p>You need to complete Step 1 (Registration) before accessing this step.</p>
+            <a href="/step1" class="btn btn-primary">Go to Step 1</a>
+        </div>
+    }
+    else
+    {
+        @if (showSuccessMessage)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                @successMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (showErrorMessage)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                @errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="step-info mb-4">
+            <span class="fst-italic"><strong>Step 2 of 4</strong> <span class="fw-light"> Required fields are indicated by <span class="required-asterisk">*</span> (Please complete this form in English)</span></span>
+        </div>
+
+        <EditForm Model="@educationModel" OnValidSubmit="@AddEducation">
+            <DataAnnotationsValidator />
+            <div class="form-container grey-light">
+                <div class="education-section">
+                    EDUCATION <span class="required-asterisk">*</span>
+                </div>
+
+                <div class="form-content form-control-sm ms-1 mt-3 mb-3 col-md-7 nav-bg">
+                    <div class="row mb-1">
+                        <div class="col-md-4 custom-input text-end">
+                            <label class="form-label">University <span class="required-asterisk">*</span></label>
+                        </div>
+                        <div class="col-md-8 mt-2">
+                            <InputSelect TValue="string"
+                                         Value="educationModel.UniversityCode"
+                                         ValueChanged="@((string val) => educationModel.UniversityCode = val)"
+                                         ValueExpression="@(() => educationModel.UniversityCode)"
+                                         class="form-select-sm cts-width custom-input">
+                                <option value="">N/A</option>
+                                @foreach (var university in universities)
+                                {
+                                    <option value="@university.Code">@university.DisplayName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => educationModel.UniversityCode)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-1">
+                        <div class="col-md-4 custom-input text-end">
+                            <label class="form-label">Major <span class="required-asterisk">*</span></label>
+                        </div>
+                        <div class="col-md-8 mt-2">
+                            <InputSelect TValue="string"
+                                         Value="educationModel.MajorCode"
+                                         ValueChanged="@((string val) => educationModel.MajorCode = val)"
+                                         ValueExpression="@(() => educationModel.MajorCode)"
+                                         class="form-select-sm cts-width custom-input">
+                                <option value="">N/A</option>
+                                @foreach (var major in majors)
+                                {
+                                    <option value="@major.Code">@major.DisplayName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => educationModel.MajorCode)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-1">
+                        <div class="col-md-4 custom-input text-end">
+                            <label class="form-label">Degree <span class="required-asterisk">*</span></label>
+                        </div>
+                        <div class="col-md-8 mt-2">
+                            <InputSelect TValue="string"
+                                         Value="educationModel.DegreeCode"
+                                         ValueChanged="@((string val) => educationModel.DegreeCode = val)"
+                                         ValueExpression="@(() => educationModel.DegreeCode)"
+                                         class="form-select-sm cts-width custom-input">
+                                <option value="">N/A</option>
+                                @foreach (var degree in degrees)
+                                {
+                                    <option value="@degree.Code">@degree.DisplayName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => educationModel.DegreeCode)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-1">
+                        <div class="col-md-4 custom-input text-end">
+                            <label class="form-label">Location <span class="required-asterisk">*</span></label>
+                        </div>
+                        <div class="col-md-8 mt-2">
+                            <InputText class="form-control cts-width custom-input" @bind-Value="educationModel.Location" placeholder="Enter university location" />
+                            <ValidationMessage For="@(() => educationModel.Location)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-1">
+                        <div class="col-md-4 custom-input text-end">
+                            <label class="form-label">Grade Point Average <span class="required-asterisk">*</span></label>
+                        </div>
+                        <div class="col-md-8 mt-2">
+                            <div class="gpa-group d-flex align-items-center gap-2">
+                                <InputNumber class="form-control custom-input gpa-input" style="width: 100px;" @bind-Value="educationModel.GPA" step="0.01" placeholder="3.5" />
+                                <span class="out-of-label custom-input">Out of</span>
+                                <InputNumber class="form-control custom-input out-of-input" style="width: 100px;" @bind-Value="educationModel.OutOf" step="0.01" placeholder="4.0" />
+                            </div>
+                            <ValidationMessage For="@(() => educationModel.GPA)" class="text-danger" />
+                            <ValidationMessage For="@(() => educationModel.OutOf)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-1">
+                        <div class="col-md-4 custom-input text-end">
+                            <label class="form-label">Graduation Date <span class="required-asterisk">*</span></label>
+                        </div>
+                        <div class="col-md-6 mt-2">
+                            <div class="row">
+                                <div class="col-5">
+                                    <InputSelect class="form-select-sm cts-width-100 custom-input" @bind-Value="educationModel.GraduationMonth">
+                                        <option value="0">Month</option>
+                                        <option value="1">January</option>
+                                        <option value="2">February</option>
+                                        <option value="3">March</option>
+                                        <option value="4">April</option>
+                                        <option value="5">May</option>
+                                        <option value="6">June</option>
+                                        <option value="7">July</option>
+                                        <option value="8">August</option>
+                                        <option value="9">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => educationModel.GraduationMonth)" class="text-danger" />
+                                </div>
+                                <div class="col-6">
+                                    <InputSelect TValue="int"
+                                                 Value="educationModel.GraduationYear"
+                                                 ValueChanged="@((int val) => educationModel.GraduationYear = val)"
+                                                 ValueExpression="@(() => educationModel.GraduationYear)"
+                                                 class="form-select-sm cts-width-100 custom-input">
+                                        <option value="0">Year</option>
+                                        @for (int year = DateTime.Now.Year + 5; year >= DateTime.Now.Year - 20; year--)
+                                        {
+                                            <option value="@year">@year</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => educationModel.GraduationYear)" class="text-danger" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="col-md-8">
+                            <button type="submit" class="btn mb-1 custom-btn1" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <span>Adding...</span>
+                                }
+                                else
+                                { 
+                                    <span>Add</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 mx-1">
+                    <h7 style="color:#333333" class="fw-bolder">Universities</h7>
+                    @if (isLoading)
+                    {
+                        <div class="text-center p-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading education records...</p>
+                        </div>
+                    }
+                    else@if (educations.Any())
+                    {
+                        <div class="table-responsive mt-2">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead class="text-dark fw-bolder">
+                                    <tr>
+                                        <th class="text-start">Date of Graduation</th>
+                                        <th class="text-start">University</th>
+                                        <th class="text-start">Location</th>
+                                        <th class="text-start">Major</th>
+                                        <th class="text-start">Degree</th>
+                                        <th class="text-start">GPA</th>
+                                        <th class="text-start">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var education in educations)
+                                    {
+                                        <tr>
+                                            <td class="text-start">@education.FormattedGraduationDate</td>
+                                            <td class="text-start">@GetUniversityName(education.UniversityCode)</td>
+                                            <td class="text-start">@education.Location</td>
+                                            <td class="text-start">@GetMajorName(education.MajorCode)</td>
+                                            <td class="text-start">@GetDegreeName(education.DegreeCode)</td>
+                                            <td class="text-start">@education.GPA.ToString("F2")</td>
+                                            <td class="text-start">
+                                                <button type="button" class="btn btn-link fs-custom"
+                                                        @onclick="() => DeleteEducation(education.Id)"
+                                                        disabled="@isDeleting">
+                                                    @if (isDeleting && deletingId == education.Id)
+                                                    {
+                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="fas fa-trash"></i>
+                                                    }
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    else
+                    {
+                        <br />
+                        <span class="fw-bolder p-2">Empty</span>
+                    }
+                </div>
+            </div>
+            <ValidationSummary class="text-danger" />
+        </EditForm>
+        <EditForm Model="@professionalQualificationModel" OnValidSubmit="@AddProfessionalQualification">
+            <DataAnnotationsValidator />
+            <div class="form-container">
+                <div class="education-section">
+                    PROFESSIONAL QUALIFICATION(OPTIONAL)
+                </div>
+                <div class="grey-light pt-2">
+                    <div class="form-content form-control-sm ms-1 mb-3 col-md-6 nav-bg">
+                        <div class="row mb-1">
+                            <div class="col-md-4 custom-input text-end">
+                                <label class="form-label">Qualification </label>
+                            </div>
+                            <div class="col-md-8 mt-2">
+                                <InputSelect TValue="string"
+                                             Value="professionalQualificationModel.QualificationCode"
+                                             ValueChanged="@((string val) => professionalQualificationModel.QualificationCode = val)"
+                                             ValueExpression="@(() => professionalQualificationModel.QualificationCode)"
+                                             class="form-select-sm cts-width-100 custom-input">
+                                    <option value="">-- Select Qualification --</option>
+                                    @foreach (var qualification in qualifications)
+                                    {
+                                        <option value="@qualification.Code">@qualification.DisplayName</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-md-4 custom-input text-end">
+                                <label class="form-label">Paper </label>
+                            </div>
+                            <div class="col-md-8 mt-2">
+                                <InputText @bind-Value="professionalQualificationModel.Paper" class="form-control form-control-sm custom-input" placeholder="Enter Paper" />
+                            </div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-md-4 custom-input text-end">
+                                <label class="form-label">From Date </label>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-7 mt-2">
+                                        <InputDate @bind-Value="professionalQualificationModel.FromDate" class="form-control form-control-sm  custom-input"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-1">
+                            <div class="col-md-4 custom-input text-end">
+                                <label class="form-label">To Date </label>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-7 mt-2">
+                                        <InputDate @bind-Value="professionalQualificationModel.ToDate" class="form-control custom-input form-control-sm" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-md-4 custom-input text-end">
+                                <label class="form-label">Status </label>
+                            </div>
+                            <div class="col-md-8 mt-2">
+                                <InputSelect TValue="string"
+                                             Value="professionalQualificationModel.StatusCode"
+                                             ValueChanged="@((string val) => professionalQualificationModel.StatusCode = val)"
+                                             ValueExpression="@(() => professionalQualificationModel.StatusCode)"
+                                             class="form-select-sm form-select custom-input">
+                                    <option value="">-- Select Status --</option>
+                                    @foreach (var status in qualificationStatuses)
+                                    {
+                                        <option value="@status.Code">@status.DisplayName</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-md-4 custom-input text-end">
+                                <label class="form-label">Notes </label>
+                            </div>
+                            <div class="col-md-8 mt-2">
+                                <InputTextArea class="custom-input cts-width-100 custom-textarea custom-height valid" @bind-Value="professionalQualificationModel.Notes" placeholder="Enter Notes" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4"></div>
+                            <div class="col-md-8">
+                                <button type="submit" class="btn mb-1 custom-btn1" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span>Adding...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Add</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 mx-1">
+                        <h7 style="color:#333333" class="fw-bolder">Professional Qualification(s)</h7>
+                        @if (isLoading)
+                        {
+                            <div class="text-center p-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Loading Professional Qualification records...</p>
+                            </div>
+                        }
+                        else@if (professionalQualifications.Any())
+                        {
+                            <div class="table-responsive mt-2">
+                                <table class="table table-striped table-hover table-sm">
+                                    <thead class="text-dark fw-bolder">
+                                        <tr>
+                                            <th class="text-start">Validity Period</th>
+                                            <th class="text-start">Qualification</th>
+                                            <th class="text-start">Paper</th>
+                                            <th class="text-start">Status</th>
+                                            <th class="text-start">Notes</th>
+                                            <th class="text-start">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var professionalQualification in professionalQualifications)
+                                        {
+                                            <tr>
+                                                <td class="text-start">@professionalQualification.FromDate.ToString("MM/dd/yyyy") - @professionalQualification.ToDate.ToString("MM/dd/yyyy")</td>
+                                                <td class="text-start">@GetQualificationName(professionalQualification.QualificationCode)</td>
+                                                <td class="text-start">@professionalQualification.Paper</td>
+                                                <td class="text-start">@GetQualificationStatusName(professionalQualification.StatusCode)</td>
+                                                <td class="text-start">@professionalQualification.Notes</td>
+                                                <td class="text-start">
+                                                    <button type="button" class="btn btn-link fs-custom"
+                                                            @onclick="() => DeleteProfessionalQualification(professionalQualification.Id)"
+                                                            disabled="@isDeleting">
+                                                        @if (isDeleting && deletingId == professionalQualification.Id)
+                                                        {
+                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="fas fa-trash"></i>
+                                                        }
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <br />
+                            <span class="fw-bolder p-2">Empty</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <ValidationSummary class="text-danger" />
+        </EditForm>
+
+        <div class="form-container">
+            <div class="education-section">
+                LANGUAGE ABILITIES <span class="required-asterisk">*</span>
+            </div>
+            <div class="grey-weight pt-2">
+                <EditForm Model="@languageAbilitiesModel" OnValidSubmit="@AddLanguageAbilities">
+                    <DataAnnotationsValidator />
+                    <div class="row form-row form-control-sm me-2 ms-2 pb-2 nav-bg">
+                        <div class="col-md-3">
+                            <label class="form-label">Language</label>
+                            <InputText @bind-Value="languageAbilitiesModel.Language" class="form-control-sm fs-custom cts-width-100 form-control-sm" />
+                            <ValidationMessage For="@(() => languageAbilitiesModel.Language)" class="text-danger" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Speaking</label>
+                            <InputSelect TValue="string"
+                                         Value="languageAbilitiesModel.SpeakingCode"
+                                         ValueChanged="@((string val) => languageAbilitiesModel.SpeakingCode = val)"
+                                         ValueExpression="@(() => languageAbilitiesModel.SpeakingCode)"
+                                         class="form-select-sm cts-width-100">
+                                <option value="">N/A</option>
+                                @foreach (var levelSkill in skillLevels)
+                                {
+                                    <option value="@levelSkill.Code">@levelSkill.DisplayName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => languageAbilitiesModel.SpeakingCode)" class="text-danger" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Reading</label>
+                            <InputSelect TValue="string"
+                                         Value="languageAbilitiesModel.ReadingCode"
+                                         ValueChanged="@((string val) => languageAbilitiesModel.ReadingCode = val)"
+                                         ValueExpression="@(() => languageAbilitiesModel.ReadingCode)"
+                                         class="form-select-sm cts-width-100">
+                                <option value="">N/A</option>
+                                @foreach (var levelSkill in skillLevels)
+                                {
+                                    <option value="@levelSkill.Code">@levelSkill.DisplayName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => languageAbilitiesModel.ReadingCode)" class="text-danger" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Writing</label>
+                            <InputSelect TValue="string"
+                                         Value="languageAbilitiesModel.WritingCode"
+                                         ValueChanged="@((string val) => languageAbilitiesModel.WritingCode = val)"
+                                         ValueExpression="@(() => languageAbilitiesModel.WritingCode)"
+                                         class="form-select-sm cts-width-100">
+                                <option value="">N/A</option>
+                                @foreach (var levelSkill in skillLevels)
+                                {
+                                    <option value="@levelSkill.Code">@levelSkill.DisplayName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => languageAbilitiesModel.WritingCode)" class="text-danger" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Listening</label>
+                            <InputSelect TValue="string"
+                                         Value="languageAbilitiesModel.ListeningCode"
+                                         ValueChanged="@((string val) => languageAbilitiesModel.ListeningCode = val)"
+                                         ValueExpression="@(() => languageAbilitiesModel.ListeningCode)"
+                                         class="form-select-sm cts-width-100">
+                                <option value="">N/A</option>
+                                @foreach (var levelSkill in skillLevels)
+                                {
+                                    <option value="@levelSkill.Code">@levelSkill.DisplayName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => languageAbilitiesModel.ListeningCode)" class="text-danger" />
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn custom-btn1" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <span>Adding...</span>
+                                }
+                                else
+                                {
+                                    <span>Add</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-4 mx-1">
+                        <h7 style="color:#333333" class="fw-bolder">Languages</h7>
+                        @if (isLoading)
+                        {
+                            <div class="text-center p-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Loading Languages records...</p>
+                            </div>
+                        }
+                        else@if (languageAbilities.Any())
+                        {
+                            <div class="table-responsive mt-2">
+                                <table class="table table-striped table-hover table-sm">
+                                    <thead class="text-dark fw-bolder">
+                                        <tr>
+                                            <th class="text-start">Language</th>
+                                            <th class="text-start">Speaking</th>
+                                            <th class="text-start">Reading</th>
+                                            <th class="text-start">Writing</th>
+                                            <th class="text-start">Listening</th>
+                                            <th class="text-start">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var languageAbilitie in languageAbilities)
+                                        {
+                                            <tr>
+                                                <td class="text-start">@languageAbilitie.Language</td>
+                                                <td class="text-start">@GetLevelSkillName(languageAbilitie.SpeakingCode)</td>
+                                                <td class="text-start">@GetLevelSkillName(languageAbilitie.ReadingCode)</td>
+                                                <td class="text-start">@GetLevelSkillName(languageAbilitie.WritingCode)</td>
+                                                <td class="text-start">@GetLevelSkillName(languageAbilitie.ListeningCode)</td>
+                                                <td class="text-start">
+                                                    <button type="button" class="btn btn-link fs-custom"
+                                                            @onclick="() => DeleteLanguageAbilities(languageAbilitie.Id)"
+                                                            disabled="@isDeleting">
+                                                        @if (isDeleting && deletingId == languageAbilitie.Id)
+                                                        {
+                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="fas fa-trash"></i>
+                                                        }
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <br />
+                            <span class="fw-bolder p-2">Empty</span>
+                        }
+                    </div>
+                    <ValidationSummary class="text-danger" />
+                </EditForm>
+                <EditForm Model="@languageProficiencyModel" OnValidSubmit="@AddLanguageProficiency">
+                    <div class="form-row">
+                        <label class="form-label p-1">If you have language proficiency test (IELTS, TOEFL), please indicate details as below</label>
+                        <div class="row form-row me-2 ms-2 pb-2 nav-bg">
+                            <div class="col-md-4">
+                                <label class="form-label">Language Proficiency Test</label>
+                                <InputText @bind-Value="languageProficiencyModel.LanguageProficiencyTest" class="form-control-sm custom-input cts-width-100" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Result</label>
+                                <InputText @bind-Value="languageProficiencyModel.Result" class="form-control-sm custom-input cts-width-100" />
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn custom-btn1" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span>Adding...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Add</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 mx-1">
+                        <h7 style="color:#333333" class="fw-bolder">Language Proficiency Test(s)</h7>
+                        @if (isLoading)
+                        {
+                            <div class="text-center p-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Loading Language Profictiency records...</p>
+                            </div>
+                        }
+                        else@if (languageProficiencys.Any())
+                        {
+                            <div class="table-responsive mt-2">
+                                <table class="table table-striped table-hover table-sm">
+                                    <thead class="text-dark fw-bolder">
+                                        <tr>
+                                            <th class="text-start">Language Proficiency Test</th>
+                                            <th class="text-start">Result</th>
+                                            <th class="text-start">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var languageProficiency in languageProficiencys)
+                                        {
+                                            <tr>
+                                                <td class="text-start">@languageProficiency.LanguageProficiencyTest</td>
+                                                <td class="text-start">@languageProficiency.Result</td>
+                                                <td class="text-start">
+                                                    <button type="button" class="btn btn-link fs-custom"
+                                                            @onclick="() => DeleteLanguageProficiency(languageProficiency.Id)"
+                                                            disabled="@isDeleting">
+                                                        @if (isDeleting && deletingId == languageProficiency.Id)
+                                                        {
+                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="fas fa-trash"></i>
+                                                        }
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <br />
+                            <span class="fw-bolder p-2">Empty</span>
+                        }
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+        <div class="mt-4 p-3 mb-4 d-flex justify-content-center nav-bg">
+            <button @onclick="PreviousStep" type="button" class="btn custom-btn1 mx-2">
+                Back
+            </button>
+            <button type="button" class="btn custom-btn1 mx-2" @onclick="NextStep" disabled="@(!educations.Any())">
+                Next
+            </button>
+        </div>
+    }
+</div>  
+@code {
+    private EducationDTO educationModel = new EducationDTO();
+    private List<Education> educations = new List<Education>();
+    private ProfessionalQualificationDTO professionalQualificationModel = new ProfessionalQualificationDTO();
+    private LanguageAbilitiesDTO languageAbilitiesModel = new LanguageAbilitiesDTO();
+    private LanguageProficiencyDTO languageProficiencyModel = new LanguageProficiencyDTO();
+    private List<ProfessionalQualification> professionalQualifications = new List<ProfessionalQualification>();
+    private List<LanguageAbilities> languageAbilities = new List<LanguageAbilities>();
+    private List<LanguageProficiency> languageProficiencys = new List<LanguageProficiency>();
+    private List<SystemConfigurationDTO> universities = new List<SystemConfigurationDTO>();
+    private List<SystemConfigurationDTO> majors = new List<SystemConfigurationDTO>();
+    private List<SystemConfigurationDTO> degrees = new List<SystemConfigurationDTO>();
+    private List<SystemConfigurationDTO> qualifications = new List<SystemConfigurationDTO>();
+    private List<SystemConfigurationDTO> qualificationStatuses = new List<SystemConfigurationDTO>();
+    private List<SystemConfigurationDTO> skillLevels = new List<SystemConfigurationDTO>();
+    private bool isCheckingAuth = true;
+    private bool showSuccessMessage = false;
+    private bool showErrorMessage = false;
+    private string successMessage = "";
+    private string errorMessage = "";
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private bool isDeleting = false;
+    private int deletingId = 0;
+    private bool isAuthenticated = false;
+    private string currentUserEmail = "";
+    private int currentUserId = 0;
+
+    private HttpClient Http => ClientFactory.CreateClient("LocalAPI");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            Console.WriteLine($"Is Authenticated: {authState.User.Identity?.IsAuthenticated}");
+            Console.WriteLine($"Claims: {string.Join(",", authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+
+            Console.WriteLine("OnAfterRenderAsync: firstRender -> Load session info");
+            var sessionInfo = await SessionService.GetSessionInfoAsync();
+            Console.WriteLine($"Session Info - IsUser: {sessionInfo.IsUser}, Email: {sessionInfo.UserEmail}, UserId: {sessionInfo.UserId}");
+
+            await CheckAuthenticationAndLoadData();
+            isCheckingAuth = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CheckAuthenticationAndLoadData()
+    {
+        try
+        {
+            Console.WriteLine("=== EducationPage: Starting authentication check ===");
+
+            await Task.Delay(100);
+
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            Console.WriteLine($"EducationPage - AuthState IsAuthenticated: {user.Identity?.IsAuthenticated}");
+            Console.WriteLine($"EducationPage - AuthState Name: '{user.Identity?.Name}'");
+            Console.WriteLine($"EducationPage - AuthState AuthenticationType: '{user.Identity?.AuthenticationType}'");
+            Console.WriteLine($"EducationPage - User.IsInRole('User'): {user.IsInRole("User")}");
+            Console.WriteLine($"EducationPage - All Claims: {string.Join(", ", user.Claims.Select(c => $"{c.Type}:{c.Value}"))}");
+
+            isAuthenticated = user.Identity?.IsAuthenticated == true && user.IsInRole("User");
+            Console.WriteLine($"EducationPage - Final isAuthenticated: {isAuthenticated}");
+
+            if (isAuthenticated)
+            {
+                currentUserEmail = user.Identity.Name ?? "";
+
+                var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out int userId))
+                {
+                    currentUserId = userId;
+                    Console.WriteLine($"EducationPage - User ID from claims: {currentUserId}");
+                    await LoadInitialData();
+                }
+                else
+                {
+                    Console.WriteLine("EducationPage - Failed to get user ID from claims");
+
+                    var sessionInfo = await SessionService.GetSessionInfoAsync();         
+                    if (sessionInfo.IsUser && sessionInfo.UserId.HasValue)
+                    {
+                        currentUserId = sessionInfo.UserId.Value; 
+                        currentUserEmail = sessionInfo.UserEmail;
+                        Console.WriteLine($"EducationPage - User ID from session: {currentUserId}");
+                        await LoadInitialData();
+                    }
+                    else
+                    {
+                        errorMessage = "Unable to retrieve user ID. Please login again.";
+                        showErrorMessage = true;
+                        isAuthenticated = false;                 
+                    }                                       
+                }
+            }
+            else
+            {
+                Console.WriteLine("EducationPage - User not authenticated or not in User role");
+
+                var sessionInfo = await SessionService.GetSessionInfoAsync();
+                Console.WriteLine($"SessionService fallback check - IsUser: {sessionInfo.IsUser}, Email: '{sessionInfo.UserEmail}', UserId: {sessionInfo.UserId}");
+
+                if (sessionInfo.IsUser)
+                {
+                    Console.WriteLine("SessionService shows user is logged in, but AuthProvider doesn't. Forcing auth refresh...");
+                    if (AuthProvider is CustomAuthStateProvider customProvider)
+                    {
+                        await customProvider.RefreshStateAsync();
+                        await Task.Delay(100);
+                        authState = await AuthProvider.GetAuthenticationStateAsync();
+                        user = authState.User;
+                        isAuthenticated = user.Identity?.IsAuthenticated == true && user.IsInRole("User");
+
+                        Console.WriteLine($"After forced refresh - isAuthenticated: {isAuthenticated}");
+
+                        if (isAuthenticated && sessionInfo.UserId.HasValue)
+                        {
+                            currentUserId = sessionInfo.UserId.Value;
+                            currentUserEmail = sessionInfo.UserEmail;
+                            await LoadInitialData();
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception in CheckAuthenticationAndLoadData: {ex}");
+            errorMessage = $"Authentication error: {ex.Message}";
+            showErrorMessage = true;
+            isAuthenticated = false;
+        }
+        finally
+        {
+            isLoading = false;
+            Console.WriteLine($"=== EducationPage: Final state - isAuthenticated: {isAuthenticated}, currentUserId: {currentUserId} ===");
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadInitialData()
+    {
+        try
+        {
+            var universityTask = Http.GetFromJsonAsync<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/University/active");
+            var majorTask = Http.GetFromJsonAsync<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/Major/active");
+            var degreeTask = Http.GetFromJsonAsync<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/Degree/active");
+            var qualificationTask = Http.GetFromJsonAsync<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/Qualification/active");
+            var qualificationStatusTask = Http.GetFromJsonAsync<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/QualificationStatus/active");
+            var levelSkillTask = Http.GetFromJsonAsync<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/SkillLevel/active");
+
+            await Task.WhenAll(universityTask, majorTask, degreeTask, qualificationTask, qualificationStatusTask, levelSkillTask);
+
+            universities = universityTask.Result ?? new List<SystemConfigurationDTO>();
+            majors = majorTask.Result ?? new List<SystemConfigurationDTO>();
+            degrees = degreeTask.Result ?? new List<SystemConfigurationDTO>();
+            qualifications = qualificationTask.Result ?? new List<SystemConfigurationDTO>();
+            qualificationStatuses = qualificationStatusTask.Result ?? new List<SystemConfigurationDTO>();
+            skillLevels = levelSkillTask.Result ?? new List<SystemConfigurationDTO>();
+                                     
+            await LoadEducations();
+            await LoadProfessionalQualification();
+            await LoadLanguageAbilities();
+            await LoadLanguageProficiency();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load data: {ex.Message}";
+            showErrorMessage = true;
+        }
+    }  
+
+    private async Task LoadEducations()
+    {
+        try
+        {
+            if (currentUserId > 0)
+            {
+                educations = await Http.GetFromJsonAsync<List<Education>>($"api/Education/user/{currentUserId}")
+                             ?? new List<Education>();
+            }
+            else
+            {
+                educations = new List<Education>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LoadEducations failed: {ex.Message}");
+            educations = new List<Education>(); 
+        }
+    }
+
+    private async Task LoadProfessionalQualification()
+    {
+        try
+        {
+            if (currentUserId > 0)
+            {
+                professionalQualifications = await Http.GetFromJsonAsync<List<ProfessionalQualification>>($"api/ProfessionalQualification/user/{currentUserId}")
+                             ?? new List<ProfessionalQualification>();
+            }
+            else
+            {
+                professionalQualifications = new List<ProfessionalQualification>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LoadProfessionalQualification failed: {ex.Message}");
+            professionalQualifications = new List<ProfessionalQualification>();
+        }
+    }
+
+    private async Task LoadLanguageAbilities()
+    {
+        try
+        {
+            if (currentUserId > 0)
+            {
+                languageAbilities = await Http.GetFromJsonAsync<List<LanguageAbilities>>($"api/LanguageAbilities/user/{currentUserId}")
+                             ?? new List<LanguageAbilities>();
+            }
+            else
+            {
+                languageAbilities = new List<LanguageAbilities>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LoadLanguageAbilities failed: {ex.Message}");
+            languageAbilities = new List<LanguageAbilities>();
+        }
+    }
+
+    private async Task LoadLanguageProficiency()
+    {
+        try
+        {
+            if (currentUserId > 0)
+            {
+                languageProficiencys = await Http.GetFromJsonAsync<List<LanguageProficiency>>($"api/LanguageProficiency/user/{currentUserId}")
+                             ?? new List<LanguageProficiency>();
+            }
+            else
+            {
+                languageProficiencys = new List<LanguageProficiency>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LoadLanguageProficiency failed: {ex.Message}");
+            languageProficiencys = new List<LanguageProficiency>();
+        }
+    }
+
+    private async Task HandleAdd<TModel>(
+        string apiEndpoint,
+        TModel model,
+        Func<Task> reloadFunc,
+        string successMsg,
+        string errorPrefix)
+    {
+        if (isSubmitting || !isAuthenticated) return;
+
+        isSubmitting = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync(apiEndpoint, model);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = successMsg;
+                showSuccessMessage = true;
+                showErrorMessage = false;
+
+                await reloadFunc(); // Load lại dữ liệu
+
+                _ = Task.Delay(3000).ContinueWith(_ =>
+                {
+                    showSuccessMessage = false;
+                    InvokeAsync(StateHasChanged);
+                });
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Session expired. Please login again.";
+                showErrorMessage = true;
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"{errorPrefix}: {errorContent}";
+                showErrorMessage = true;
+                showSuccessMessage = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"{errorPrefix}: {ex.Message}";
+            showErrorMessage = true;
+            showSuccessMessage = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+    private async Task HandleDelete<T>(
+        string apiEndpoint,
+        int id,
+        List<T> targetList,
+        string successMsg,
+        string errorPrefix)
+        where T : class
+    {
+        if (isDeleting || !isAuthenticated) return;
+
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            "Are you sure you want to delete this record?");
+        if (!confirmed) return;
+
+        isDeleting = true;
+        deletingId = id;
+
+        try
+        {
+            var response = await Http.DeleteAsync($"{apiEndpoint}/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = successMsg;
+                showSuccessMessage = true;
+                showErrorMessage = false;
+
+                targetList.RemoveAll(e =>
+                {
+                    var prop = e.GetType().GetProperty("Id");
+                    if (prop == null) return false;
+                    int val = (int)(prop.GetValue(e) ?? 0);
+                    return val == id;
+                });
+
+                _ = Task.Delay(3000).ContinueWith(_ =>
+                {
+                    showSuccessMessage = false;
+                    InvokeAsync(StateHasChanged);
+                });
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Session expired. Please login again.";
+                showErrorMessage = true;
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"{errorPrefix}: {errorContent}";
+                showErrorMessage = true;
+                showSuccessMessage = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"{errorPrefix}: {ex.Message}";
+            showErrorMessage = true;
+            showSuccessMessage = false;
+        }
+        finally
+        {
+            isDeleting = false;
+            deletingId = 0;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddEducation() =>
+        await HandleAdd(
+            "api/Education",
+            educationModel,
+            LoadEducations,
+            "Education record added successfully!",
+            "Failed to add education");
+
+    private async Task DeleteEducation(int id) =>
+        await HandleDelete(
+            "api/Education",
+            id,
+            educations,
+            "Education record deleted successfully!",
+            "Failed to delete education");
+
+    private async Task AddProfessionalQualification() =>
+        await HandleAdd(
+            "api/ProfessionalQualification",
+            professionalQualificationModel,
+            LoadProfessionalQualification,
+            "Professional qualification added successfully!",
+            "Failed to add professional qualification");
+
+    private async Task DeleteProfessionalQualification(int id) =>
+        await HandleDelete(
+            "api/ProfessionalQualification",
+            id,
+            professionalQualifications,
+            "Professional qualification deleted successfully!",
+            "Failed to delete professional qualification");
+
+    private async Task AddLanguageAbilities() =>
+        await HandleAdd(
+            "api/LanguageAbilities",
+            languageAbilitiesModel,
+            LoadLanguageAbilities,
+            "Language abilities added successfully!",
+            "Failed to add language abilities");
+
+    private async Task DeleteLanguageAbilities(int id) =>
+        await HandleDelete(
+            "api/LanguageAbilities",
+            id,
+            languageAbilities,
+            "Language abilities deleted successfully!",
+            "Failed to delete language abilities");
+
+    private async Task AddLanguageProficiency() =>
+        await HandleAdd(
+            "api/LanguageProficiency",
+            languageProficiencyModel,
+            LoadLanguageProficiency,
+            "Language proficiency added successfully!",
+            "Failed to add language proficiency");
+
+    private async Task DeleteLanguageProficiency(int id) =>
+        await HandleDelete(
+            "api/LanguageProficiency",
+            id,
+            languageProficiencys,
+            "Language proficiency deleted successfully!",
+            "Failed to delete language proficiency");
+
+    private async Task NextStep()
+    {
+        if (educations.Any())
+        {
+            Navigation.NavigateTo("/step3");
+        }
+        else
+        {
+            errorMessage = "Please add at least one education record before proceeding to the next step.";
+            showErrorMessage = true;
+        }
+    }
+
+    private async Task PreviousStep()
+    {
+        if (educations.Any())
+        {
+            Navigation.NavigateTo("/step1");
+        }
+        else
+        {
+            errorMessage = "Please add at least one education record before proceeding to the next step.";
+            showErrorMessage = true;
+        }
+    }
+
+    private string GetUniversityName(string universityCode)
+    {
+        return universities.FirstOrDefault(u => u.Code == universityCode)?.DisplayName ?? "Unknown";
+    }
+
+    private string GetMajorName(string majorCode)
+    {
+        return majors.FirstOrDefault(m => m.Code == majorCode)?.DisplayName ?? "Unknown";
+    }
+
+    private string GetDegreeName(string degreeCode)
+    {
+        return degrees.FirstOrDefault(d => d.Code == degreeCode)?.DisplayName ?? "Unknown";
+    }
+
+    private string GetLevelSkillName(string levelSkillCode)
+    {
+        return skillLevels.FirstOrDefault(u => u.Code == levelSkillCode)?.DisplayName ?? "Unknown";
+    }
+
+    private string GetQualificationName(string qualificationCode)
+    {
+        return qualifications.FirstOrDefault(m => m.Code == qualificationCode)?.DisplayName ?? "Unknown";
+    }
+
+    private string GetQualificationStatusName(string qualificationStatusCode)
+    {
+        return qualificationStatuses.FirstOrDefault(d => d.Code == qualificationStatusCode)?.DisplayName ?? "Unknown";
+    }
+}

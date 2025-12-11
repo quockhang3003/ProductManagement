@@ -1,0 +1,1234 @@
+﻿@page "/review"
+@page "/review/{userId:int}"
+@using System.ComponentModel.DataAnnotations
+@using Domain.DTO
+@using Domain.Entities
+@using Domain.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using Service
+@using System.Security.Claims
+@using System.Text.Json
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JSRuntime
+@inject SessionService SessionService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject IEncryptionService EncryptionService
+
+<div class="container mt-4">
+    <div class="kpmg-header">
+        <h1 class="kpmg-title mb-2">KPMG ONLINE APPLICATION</h1>
+    </div>
+
+    <div class="container">
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading application data...</p>
+            </div>
+        }
+        else if (!isAuthenticated)
+        {
+            <div class="alert alert-warning">
+                <h4>Authentication Required</h4>
+                <p>You need to complete the application steps before accessing the preview.</p>
+                <a href="/step1" class="btn btn-primary">Go to Step 1</a>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+        else
+        {
+            <div class="row border border-2 py-2 grey-light">
+                <div class="col-md-3">
+                    @if (!string.IsNullOrEmpty(userPhotoBase64))
+                    {
+                        <img src="@userPhotoBase64" alt="User Photo" class="img-fluid border" style="max-width: 200px;" />
+                    }
+                    else
+                    {
+                        <div class="border p-4 text-center" style="width: 200px; height: 250px;">
+                            <i class="fas fa-user fa-5x text-muted"></i>
+                        </div>
+                    }
+                </div>
+                <div class="col-md-9 mt-4">
+                    <div class="mb-3 row">
+                        <div class="col-md-3">
+                            <label class="fw-bold">Preferable office location</label>
+                        </div>
+                        <div class="col-md-5">
+                            <p>@GetLocationName(userInfo?.PreferableOfficeLocation)</p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold mb-2">I would like to apply for</label>
+                        <div class="row mb-5">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-9">
+                                <span><strong>1st preference:</strong> @GetPreferenceName(userInfo?.FirstPreference)</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-9">
+                                <span><strong>2nd preference:</strong> @GetPreferenceName(userInfo?.SecondPreference)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-container mt-4">
+                <div class="header-section-review">
+                    PERSONAL INFORMATION
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm profile-table mb-0 mt-3">
+                        <tbody>
+                            <tr>
+                                <th class="label-cell cts-width-20">Last name</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.LastName ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">First name</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.FirstName ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Full name in Vietnamese</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.VietnameseName ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Gender</th>
+                                <td class="value-cell cts-width-20 text-start">@(userInfo?.Gender ?? "N/A")</td>
+
+                                <th class="label-cell cts-width-10">Nationality</th>
+                                <td colspan="3" class="value-cell text-start">@(userInfo?.Nationality ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Date of Birth</th>
+                                <td class="value-cell cts-width-20 text-start ">@(userInfo?.DateOfBirth?.ToString("dd MMM yyyy") ?? "N/A")</td>
+
+                                <th class="label-cell cts-width-15">Place of Birth</th>
+                                <td colspan="3" class="value-cell text-start ">@(userInfo?.PlaceOfBirth ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">ID Card No</th>
+                                <td class="value-cell cts-width-20 text-start">
+                                    @GetDecryptedIDCard()
+                                </td>
+
+                                <th class="label-cell">Date of issue</th>
+                                <td class="value-cell text-start">@(userInfo?.DateOfIssue?.ToString("dd MMM yyyy") ?? "N/A")</td>
+
+                                <th class="label-cell cts-width-10">Place of issue</th>
+                                <td class="value-cell text-start">@(userInfo?.PlaceOfIssue ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Email contact</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.Email ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Mobile contact</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.Mobile ?? "N/A")</td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="9" class="text-start" style="background-color: #e9ecef;"><strong>Permanent address</strong></td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Number &amp; Street</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.Street ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Ward</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.Ward ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">City/Province</th>
+                                <td colspan="5" class="value-cell text-start">@GetCityName(userInfo?.City)</td>
+                            </tr>
+                            <tr class="section-header">
+                                <td colspan="9" class="text-start" style="background-color: #e9ecef;"><strong>Current address</strong></td>
+                            </tr>
+                            <tr>
+                                <th class="label-cell">Address</th>
+                                <td colspan="5" class="value-cell text-start">@(userInfo?.CurrentAddress ?? "N/A")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="form-container mt-4">
+                <div class="header-section-review">
+                    EDUCATIONAL BACKGROUND
+                </div>
+                <div class="form-content grey-light p-3">
+                    <h6 class="fw-bold">Universities</h6>
+                    @if (educations?.Any() == true)
+                    {
+                        <table class="table final-step table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>University</th>
+                                    <th>Location</th>
+                                    <th>Major</th>
+                                    <th>Year of graduation</th>
+                                    <th>Degree</th>
+                                    <th>GPA</th>
+                                    <th>Transcript</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var edu in educations)
+                                {
+                                    <tr>
+                                        <td>@GetUniversityName(edu.UniversityCode)</td>
+                                        <td>@edu.Location</td>
+                                        <td>@GetMajorName(edu.MajorCode)</td>
+                                        <td>@edu.FormattedGraduationDate</td>
+                                        <td>@GetDegreeName(edu.DegreeCode)</td>
+                                        <td>@edu.GPA.ToString("F2")</td>
+                                        <td>
+                                            @{
+                                                var transcript = transcripts?.FirstOrDefault(t => t.UniversityCode == edu.UniversityCode);
+                                            }
+                                            @if (transcript != null)
+                                            {
+                                                <a href="javascript:void(0)" @onclick="() => ViewTranscript(transcript.Id)">
+                                                    View File
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span>-</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No universities added</p>
+                    }
+
+                    @if (professionalQualifications?.Any() == true)
+                    {
+                        <h6 class="fw-bold mt-4">Professional Qualification(s)</h6>
+                        <table class="table final-step table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Validity Period</th>
+                                    <th>Qualification</th>
+                                    <th>Paper</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pq in professionalQualifications)
+                                {
+                                    <tr>
+                                        <td>@pq.FromDate.ToString("MM/dd/yyyy") - @pq.ToDate.ToString("MM/dd/yyyy")</td>
+                                        <td>@GetQualificationName(pq.QualificationCode)</td>
+                                        <td>@pq.Paper</td>
+                                        <td>@GetQualificationStatusName(pq.StatusCode)</td>
+                                        <td>@pq.Notes</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+                    <h6 class="fw-bold mt-4">Foreign Language Skills</h6>
+                    @if (languageAbilities?.Any() == true)
+                    {
+                        <table class="table final-step table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Language</th>
+                                    <th>Speaking</th>
+                                    <th>Reading</th>
+                                    <th>Writing</th>
+                                    <th>Listening</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var lang in languageAbilities)
+                                {
+                                    <tr>
+                                        <td>@lang.Language</td>
+                                        <td>@GetLevelSkillName(lang.SpeakingCode)</td>
+                                        <td>@GetLevelSkillName(lang.ReadingCode)</td>
+                                        <td>@GetLevelSkillName(lang.WritingCode)</td>
+                                        <td>@GetLevelSkillName(lang.ListeningCode)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No language skills added</p>
+                    }
+
+                    @if (languageProficiencies?.Any() == true)
+                    {
+                        <h6 class="fw-bold mt-4">Language Proficiency Test(s)</h6>
+                        <table class="table final-step table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Language Proficiency Test</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var lp in languageProficiencies)
+                                {
+                                    <tr>
+                                        <td>@lp.LanguageProficiencyTest</td>
+                                        <td>@lp.Result</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+
+            @if (workExperiences?.Any() == true)
+            {
+                <div class="form-container mt-4">
+                    <div class="header-section-review">
+                        WORK EXPERIENCE
+                    </div>
+                    <div class="form-content grey-light p-3">
+                        <table class="table final-step table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Duration</th>
+                                    <th>Company Name</th>
+                                    <th>Job Title</th>
+                                    <th>Employment Type</th>
+                                    <th>Main Duties</th>
+                                    <th>Achievement</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var work in workExperiences)
+                                {
+                                    <tr>
+                                        <td>@work.StartDate.ToString("MM/dd/yyyy") - @work.EndDate.ToString("MM/dd/yyyy")</td>
+                                        <td>@work.CompanyName</td>
+                                        <td>@work.JobTitle</td>
+                                        <td>@GetEmploymentTypeName(work.EmploymentTypeCode)</td>
+                                        <td>@work.MainDuties</td>
+                                        <td>@work.Achievement</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            @if (attachments?.Any() == true)
+            {
+                <div class="form-container mt-4">
+                    <div class="header-section-review">
+                        OTHER ATTACHMENTS
+                    </div>
+                    <div class="form-content grey-light p-3">
+                        <table class="table final-step table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>File</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var attachment in attachments)
+                                {
+                                    <tr>
+                                        <td>@attachment.AttachmentName</td>
+                                        <td><a href="javascript:void(0)" @onclick="() => ViewAttachment(attachment.Id)">View File</a></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <div class="form-container mt-4">
+                <div class="header-section-review">
+                    PERSONAL PERSPECTIVE & INTEREST
+                </div>
+                <div class="form-content grey-light p-3">
+                    @if (userQuestionAnswers?.Any() == true)
+                    {
+                        @foreach (var qa in userQuestionAnswers)
+                        {
+                            <div class="mb-3">
+                                <label class="fw-bold">@qa.QuestionText</label>
+                                <p>@(string.IsNullOrEmpty(qa.Answer) ? "N/A" : qa.Answer)</p>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No personal perspective answers provided</p>
+                    }
+                </div>
+            </div>
+
+            <div class="form-container mt-4">
+                <div class="header-section-review">
+                    PLEASE LET US KNOW HOW YOU HEARD ABOUT KPMG
+                </div>
+                <div class="form-content grey-light p-3">
+                    @{
+                        var options = howHeardOptions
+                        ?.Where(o => !string.Equals(o.OptionText, "Agree to Terms", StringComparison.OrdinalIgnoreCase))
+                        .ToList() ?? new List<HowHeardOptionDTO>();
+
+
+                        int total = options.Count;
+                        int colSize = (int)Math.Ceiling(total / 3.0);
+                    }
+                    <div class="row nav-bg p-3">
+                        @for (int col = 0; col < 3; col++)
+                        {
+                            <div class="col-md-2">
+                                @for (int i = col * colSize; i < Math.Min((col + 1) * colSize, total); i++)
+                                {
+                                    var opt = options[i];
+                                    var isChecked = userSelectedHowHeard.Any(s =>
+                                    string.Equals(s, opt.OptionText, StringComparison.OrdinalIgnoreCase));
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" checked="@isChecked" disabled />
+                                        <label class="form-check-label">@opt.OptionText</label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="px-3 mt-4">
+                        <div class="col-12">
+                            <h7 class="fw-bold">Collection and Use of Personal Information</h7>
+                            <p class="small mb-2">
+                                [KPMG Limited] ("KPMG") collects personal information that you voluntarily submit for use in connection with our various recruitment and employment purposes and processes. The following is KPMG's collection and use of personal information policy for the recruiting process:
+                            </p>
+                            <ul class="small">
+                                <li class="mb-2">KPMG will collect your personal information, such as name, address, emails, phone numbers, employment history, salary history, etc., through our recruiting process.</li>
+                                <li class="mb-2">KPMG requires a valid e-mail address as a login. This address allows us to communicate with your qualifications and/or preferences match job opportunities, or if you opt to receive automated notifications of job postings at KPMG. Once you create and submit a profile, it is stored in our database. At any time, you can "opt-out" of receiving further communications from KPMG by contacting KPMG Vietnam Recruiting <a href="mailto:vnrecruiting@kpmg.com.vn" class="text-primary">vnrecruiting@kpmg.com.vn</a>.</li>
+                                <li class="mb-2">KPMG may use your personal information to contact you during your candidacy for employment, to send you announcements, or to request additional information as required. Further, should you be hired by KPMG, this information may be used by KPMG in connection with normal business activities and in connection with the employer-employee relationship. For details on KPMG's commitment to protect your privacy, click on <a href="https://kpmg.com/vn/en/home/misc/privacy.html" target="_blank" class="text-primary">https://kpmg.com/vn/en/home/misc/privacy.html</a>.</li>
+                                <li>KPMG will not share personal information with third parties unless it is necessary to carry out your business or as required by law or other legal processes, and we will never sell your personal information. We will, however, share data with system vendors, as well as with other companies who provide employment verification services, with service providers who process data on behalf of KPMG or provide other services for the conduct of KPMG's business. Furthermore, personal data collected by KPMG may be transferred to other member firms of KPMG International where it is necessary to meet the purpose for which you have submitted the information.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="px-3" style="background-color: #f8f9fa; border-left: 4px solid #0052cc;">
+                        <span>
+                            <p class="small text-primary fst-italic mb-2">
+                                <input class="form-check-input" type="checkbox" checked
+                                       disabled id="agreeTermsCheckbox" />
+                                The information you submit to KPMG must be complete and accurate to the best of your knowledge. The falsification of this information, falsification of other documents that you may provide, and/or the giving of incomplete information may result in the withdrawal of any employment offer and/or the immediate termination of your employment now or in the future.
+                            </p>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="mt-4 p-3 mb-4 d-flex justify-content-center nav-bg">
+            <button type="button" class="btn custom-btn1 mx-2" @onclick="PrintApplication">
+                Print
+            </button>
+            <button type="button" class="btn custom-btn1 mx-2" @onclick="BackToApplicationForm">
+                Back to Application Form
+            </button>
+            <button type="button" class="btn custom-btn1 mx-2" @onclick="Close">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+@code 
+{
+    public class HowHeardOptionDTO
+    {
+        public int Id { get; set; }
+        public string OptionText { get; set; } = "";
+    }
+
+    public class QuestionWithAnswerDTO
+    {
+        public int Id { get; set; }
+        public string Text { get; set; } = "";
+        public string Answer { get; set; } = "";
+        public int MaxWords { get; set; }
+        public bool IsSaved { get; set; }
+        public DateTime? AnswerUpdatedAt { get; set; }
+        public bool IsRequired { get; set; }
+        public int Order { get; set; }
+    }
+
+    private User? userInfo;
+    private List<Education>? educations;
+    private List<ProfessionalQualification>? professionalQualifications;
+    private List<LanguageAbilities>? languageAbilities;
+    private List<LanguageProficiency>? languageProficiencies;
+    private List<WorkExperience>? workExperiences;
+    private List<UserQuestionAnswerWithQuestionDTO>? userQuestionAnswers;
+    private List<TranscriptDTO>? transcripts;
+    private List<AttachmentsDTO>? attachments;
+    private string userPhotoBase64 = "";
+
+    private List<SystemConfigurationDTO> offices = new();
+    private List<SystemConfigurationDTO> preferences = new();
+    private List<SystemConfigurationDTO> cities = new();
+    private List<SystemConfigurationDTO> universities = new();
+    private List<SystemConfigurationDTO> majors = new();
+    private List<SystemConfigurationDTO> degrees = new();
+    private List<SystemConfigurationDTO> qualifications = new();
+    private List<SystemConfigurationDTO> qualificationStatuses = new();
+    private List<SystemConfigurationDTO> skillLevels = new();
+    private List<SystemConfigurationDTO> employmentTypes = new();
+
+    private List<HowHeardOptionDTO> howHeardOptions = new();
+    private List<string> userSelectedHowHeard = new();
+
+    private bool isLoading = true;
+    private bool isAuthenticated = false;
+    private string currentUserEmail = "";
+    private int currentUserId = 0;
+    private string errorMessage = ""; 
+    private bool agreeToTermsSelected = false;
+
+    [Parameter]
+    public int? userId { get; set; }
+
+
+    private HttpClient Http => ClientFactory.CreateClient("LocalAPI");
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Console.WriteLine($"[Review] OnParametersSetAsync triggered, userId={userId}");
+
+        if (userId.HasValue && userId.Value > 0)
+        {
+            Console.WriteLine($"[Admin Mode] Loading review for userId={userId.Value}");
+            currentUserId = userId.Value;
+            isAuthenticated = true;
+            await LoadAllData();
+            isLoading = false;
+        }
+        else
+        {
+            await CheckAuthenticationAndLoadData();
+        }
+    }
+
+    private async Task CheckAuthenticationAndLoadData()
+    {
+        try
+        {
+            Console.WriteLine("=== Review Page: Starting authentication check ===");
+            await Task.Delay(100);
+            
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            isAuthenticated = user.Identity?.IsAuthenticated == true;
+            Console.WriteLine($"[AuthState] IsAuthenticated = {isAuthenticated}");
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                foreach (var c in user.Claims)
+                {
+                    Console.WriteLine($"[Claim] {c.Type} => {c.Value}");
+                }
+            }
+
+            if (isAuthenticated)
+            {
+                currentUserEmail = user.Identity.Name ?? "";
+                var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                  ?? user.FindFirst("sub")?.Value
+                                  ?? user.FindFirst("id")?.Value
+                                  ?? user.FindFirst("nameid")?.Value;
+
+                Console.WriteLine($"[Auth] userIdClaim raw = {userIdClaim}");
+
+                if (int.TryParse(userIdClaim, out int userId))
+                {
+                    currentUserId = userId;
+                    await LoadAllData();
+                }
+                else
+                {
+                    var sessionInfo = await SessionService.GetSessionInfoAsync();
+                    Console.WriteLine($"[Session] IsUser={sessionInfo.IsUser}, UserId={sessionInfo.UserId}, Email={sessionInfo.UserEmail}");
+                    if (sessionInfo.IsUser && sessionInfo.UserId.HasValue)
+                    {
+                        currentUserId = sessionInfo.UserId.Value;
+                        currentUserEmail = sessionInfo.UserEmail;
+                        await LoadAllData();
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(currentUserEmail))
+                        {
+                            Console.WriteLine("[Auth] Attempting to load user by email (fallback).");
+                            userInfo = await GetJsonSafe<User>($"api/User/{Uri.EscapeDataString(currentUserEmail)}");
+                            if (userInfo != null)
+                            {
+                                Console.WriteLine($"[Auth] Loaded user by email: {userInfo.Email}");
+                                if (userInfo.Id > 0) currentUserId = userInfo.Id;
+                                await LoadAllData();
+                            }
+                            else
+                            {
+                                errorMessage = "Unable to retrieve user information. Please login again.";
+                                isAuthenticated = false;
+                            }
+                        }
+                        else
+                        {
+                            errorMessage = "Unable to retrieve user information. Please login again.";
+                            isAuthenticated = false;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                var sessionInfo = await SessionService.GetSessionInfoAsync();
+                Console.WriteLine($"[Session-fallback] IsUser={sessionInfo.IsUser}, UserId={sessionInfo.UserId}, Email={sessionInfo.UserEmail}");
+                if (sessionInfo.IsUser && sessionInfo.UserId.HasValue)
+                {
+                    currentUserId = sessionInfo.UserId.Value;
+                    currentUserEmail = sessionInfo.UserEmail;
+                    await LoadAllData();
+                    isAuthenticated = true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception in CheckAuthenticationAndLoadData: {ex}");
+            errorMessage = $"An error occurred while loading data: {ex.Message}";
+            isAuthenticated = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task<T?> GetJsonSafe<T>(string requestUri) where T : class
+    {
+        try
+        {
+            var baseAddr = Http.BaseAddress?.ToString()?.TrimEnd('/') ?? "<no-base-address>";
+            var fullUrl = $"{baseAddr}/{requestUri.TrimStart('/')}";
+            Console.WriteLine($"[HTTP] GET {fullUrl}");
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+            try
+            {
+                var cookieHeader = HttpContextAccessor?.HttpContext?.Request?.Headers["Cookie"].ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                {
+                    // attach cookie string to outgoing request so API sees the same cookies
+                    if (req.Headers.Contains("Cookie")) req.Headers.Remove("Cookie");
+                    req.Headers.Add("Cookie", cookieHeader);
+                    Console.WriteLine("[GetJsonSafe] Forwarded Cookie header to API request.");
+                }
+                else
+                {
+                    Console.WriteLine("[GetJsonSafe] No Cookie header present in incoming HttpContext.");
+                }
+            }
+            catch (Exception exHeader)
+            {
+                Console.WriteLine($"[GetJsonSafe] Error reading/adding Cookie header: {exHeader}");
+            }
+
+            // send request
+            var resp = await Http.SendAsync(req);
+
+            if (resp == null)
+            {
+                Console.WriteLine($"[HTTP] Null response for {fullUrl}");
+                return default;
+            }
+
+            Console.WriteLine($"[HTTP] Status {(int)resp.StatusCode} for {fullUrl}");
+
+            var content = await resp.Content.ReadAsStringAsync();
+            if (!resp.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[HTTP] Error body for {fullUrl}: {content}");
+                return default;
+            }
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                Console.WriteLine($"[HTTP] Empty body for {fullUrl}");
+                return default;
+            }
+
+            try
+            {
+                var result = JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (result == null)
+                {
+                    Console.WriteLine($"[HTTP] Deserialized null for {fullUrl}; raw body length {content.Length}");
+                }
+                return result;
+            }
+            catch (Exception exJson)
+            {
+                Console.WriteLine($"[HTTP] JSON deserialization error for {fullUrl}: {exJson}. Raw body: {content}");
+                return default;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[HTTP] Exception for {requestUri}: {ex}");
+            return default;
+        }
+    }
+
+    private async Task<T?> TryMultipleEndpoints<T>(params string[] endpoints) where T : class
+    {
+        foreach (var ep in endpoints)
+        {
+            if (string.IsNullOrWhiteSpace(ep)) continue;
+            try
+            {
+                Console.WriteLine($"[TryMultipleEndpoints] Trying {ep}");
+                var res = await GetJsonSafe<T>(ep);
+                if (res != null)
+                {
+                    Console.WriteLine($"[TryMultipleEndpoints] Success -> {ep}");
+                    return res;
+                }
+                else
+                {
+                    Console.WriteLine($"[TryMultipleEndpoints] Null from {ep}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TryMultipleEndpoints] Exception calling {ep}: {ex.Message}");
+            }
+        }
+        return default;
+    }
+
+    private async Task LoadAllData()
+    {
+        try
+        {
+            Console.WriteLine($"[LoadAllData] Starting load for currentUserId={currentUserId}, currentUserEmail='{currentUserEmail}'");
+            await LoadLookupData();
+
+            if (currentUserId <= 0 && userInfo == null && !string.IsNullOrEmpty(currentUserEmail))
+            {
+                Console.WriteLine("[LoadAllData] Trying load user by email fallback");
+                userInfo = await GetJsonSafe<User>($"api/User/{Uri.EscapeDataString(currentUserEmail)}");
+                if (userInfo != null && userInfo.Id > 0)
+                {
+                    currentUserId = userInfo.Id;
+                    Console.WriteLine($"[LoadAllData] Found user by email -> id={currentUserId}, email={userInfo.Email}");
+                }
+            }
+
+            if (currentUserId <= 0)
+            {
+                errorMessage = "User id is invalid or user not found. Please check the provided user id.";
+                Console.WriteLine("[LoadAllData] Aborting: currentUserId <= 0");
+                return;
+            }
+
+            if (userInfo == null)
+            {
+                await LoadUserData();
+                if (userInfo == null)
+                {
+                    errorMessage = $"Unable to load user profile for id {currentUserId}. Check API endpoints or network. See console logs for details.";
+                    Console.WriteLine("[LoadAllData] LoadUserData failed, userInfo is null. Aborting further loads.");
+                    return;
+                }
+            }
+
+            if (string.IsNullOrEmpty(currentUserEmail) && !string.IsNullOrEmpty(userInfo?.Email))
+            {
+                currentUserEmail = userInfo.Email;
+                Console.WriteLine($"[LoadAllData] Set currentUserEmail from userInfo: {currentUserEmail}");
+            }
+
+            await LoadEducationData();
+            await LoadWorkExperienceData();
+            await LoadPersonalPerspectiveData();
+            await LoadPhotoAndAttachments();
+
+            Console.WriteLine("[LoadAllData] All data loaded successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoadAllData] Error loading data: {ex}");
+            errorMessage = $"Error loading application data: {ex.Message}";
+        }
+    }
+
+    private async Task LoadLookupData()
+    {
+        offices = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/Office/active") ?? new();
+        preferences = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/FirstPreference/active") ?? new();
+        cities = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/City/active") ?? new();
+        universities = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/University/active") ?? new();
+        majors = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/Major/active") ?? new();
+        degrees = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/Degree/active") ?? new();
+        qualifications = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/Qualification/active") ?? new();
+        qualificationStatuses = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/QualificationStatus/active") ?? new();
+        skillLevels = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/SkillLevel/active") ?? new();
+        employmentTypes = await GetJsonSafe<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/EmploymentType/active") ?? new();
+    }
+
+    private async Task LoadUserData()
+    {
+        if (currentUserId <= 0)
+        {
+            Console.WriteLine("[LoadUserData] currentUserId invalid (<=0).");
+            userInfo = null;
+            return;
+        }
+
+        Console.WriteLine($"[LoadUserData] Attempting to load user for id={currentUserId}");
+
+        // danh sách endpoint thử (thêm các biến thể phổ biến)
+        var endpoints = new[]
+        {
+        $"api/User/{currentUserId}",
+        $"api/Users/{currentUserId}",
+        $"api/User/by-id/{currentUserId}",
+        $"api/Application/user/{currentUserId}",
+        $"api/User/profile/{currentUserId}",
+        // fallback to email-based only if email present
+        !string.IsNullOrEmpty(currentUserEmail) ? $"api/User/{Uri.EscapeDataString(currentUserEmail)}" : null,
+        !string.IsNullOrEmpty(currentUserEmail) ? $"api/User/by-email/{Uri.EscapeDataString(currentUserEmail)}" : null
+    }.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+
+        userInfo = await TryMultipleEndpoints<User>(endpoints);
+
+        if (userInfo == null)
+        {
+            Console.WriteLine($"[LoadUserData] All endpoints returned null for userId={currentUserId}");
+        }
+        else
+        {
+            Console.WriteLine($"[LoadUserData] Loaded user: Id={userInfo.Id}, Email={userInfo.Email}, Name={userInfo.FirstName} {userInfo.LastName}");
+        }
+    }
+
+    private async Task LoadEducationData()
+    {
+        educations = await GetJsonSafe<List<Education>>($"api/Education/user/{currentUserId}") ?? new();
+        professionalQualifications = await GetJsonSafe<List<ProfessionalQualification>>($"api/ProfessionalQualification/user/{currentUserId}") ?? new();
+        languageAbilities = await GetJsonSafe<List<LanguageAbilities>>($"api/LanguageAbilities/user/{currentUserId}") ?? new();
+        languageProficiencies = await GetJsonSafe<List<LanguageProficiency>>($"api/LanguageProficiency/user/{currentUserId}") ?? new();
+    }
+
+    private async Task LoadWorkExperienceData()
+    {
+        workExperiences = await GetJsonSafe<List<WorkExperience>>($"api/WorkExperience/user/{currentUserId}") ?? new();
+    }
+
+    private async Task LoadPersonalPerspectiveData()
+    {
+        try
+        {
+            if (userId.HasValue && userId.Value > 0)
+            {
+                Console.WriteLine($"[LoadPersonalPerspectiveData] Admin mode detected - requesting admin endpoint for user {userId.Value}");
+                var adminQwa = await GetJsonSafe<List<QuestionWithAnswerDTO>>($"api/UserQuestionAnswer/user/{userId.Value}/questions-with-answers");
+                if (adminQwa != null && adminQwa.Any())
+                {
+                    Console.WriteLine($"[LoadPersonalPerspectiveData] Admin endpoint returned {adminQwa.Count} Q+A items");
+                    userQuestionAnswers = adminQwa.Select(x => new UserQuestionAnswerWithQuestionDTO
+                    {
+                        QuestionId = x.Id,
+                        QuestionText = x.Text,
+                        Answer = x.Answer,
+                        CreatedAt = x.AnswerUpdatedAt ?? DateTime.MinValue,
+                        UpdatedAt = x.AnswerUpdatedAt ?? DateTime.MinValue,
+                        UserId = userId.Value
+                    }).ToList();
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("[LoadPersonalPerspectiveData] Admin endpoint returned null/empty - will fallback to other endpoints");
+                }
+            }
+
+            var qwa = await TryMultipleEndpoints<List<QuestionWithAnswerDTO>>(
+                "api/UserQuestionAnswer/questions-with-answers", 
+                $"api/UserQuestionAnswer/user/{currentUserId}",  
+                $"api/UserQuestionAnswer/user/{Uri.EscapeDataString(currentUserEmail)}"
+            );
+
+            if (qwa != null && qwa.Any())
+            {
+                Console.WriteLine($"[LoadPersonalPerspectiveData] questions-with-answers count = {qwa.Count}");
+                userQuestionAnswers = qwa.Select(x => new UserQuestionAnswerWithQuestionDTO
+                {
+                    QuestionId = x.Id,
+                    QuestionText = x.Text,
+                    Answer = x.Answer,
+                    CreatedAt = x.AnswerUpdatedAt ?? DateTime.MinValue,
+                    UpdatedAt = x.AnswerUpdatedAt ?? DateTime.MinValue,
+                    UserId = currentUserId
+                }).ToList();
+                return;
+            }
+            var questions = await TryMultipleEndpoints<List<QuestionDTO>>("api/Question", "api/UserQuestion", "api/Questions") ?? new List<QuestionDTO>();
+            var answers = await TryMultipleEndpoints<List<UserQuestionAnswerWithQuestionDTO>>("api/UserQuestionAnswer/questions-with-answers", $"api/UserQuestionAnswer/user/{currentUserId}") ?? new List<UserQuestionAnswerWithQuestionDTO>();
+
+            Console.WriteLine($"[LoadPersonalPerspectiveData] Master questions count = {questions.Count}");
+            Console.WriteLine($"[LoadPersonalPerspectiveData] User answers count = {answers.Count}");
+
+            var answersById = answers.Where(a => a.QuestionId > 0).GroupBy(a => a.QuestionId)
+                                     .ToDictionary(g => g.Key, g => g.OrderBy(a => a.UpdatedAt).Last().Answer ?? "", EqualityComparer<int>.Default);
+
+            var answersByText = answers.Where(a => a.QuestionId <= 0 && !string.IsNullOrWhiteSpace(a.QuestionText))
+                                      .GroupBy(a => a.QuestionText!.Trim(), StringComparer.OrdinalIgnoreCase)
+                                      .ToDictionary(g => g.Key, g => g.OrderBy(a => a.UpdatedAt).Last().Answer ?? "", StringComparer.OrdinalIgnoreCase);
+
+            var combined = new List<UserQuestionAnswerWithQuestionDTO>();
+
+            foreach (var q in questions)
+            {
+                string ans = "";
+                if (q.Id > 0 && answersById.TryGetValue(q.Id, out var aById))
+                {
+                    ans = aById;
+                }
+                else
+                {
+                    var key = (q.Text ?? "").Trim();
+                    if (!string.IsNullOrEmpty(key) && answersByText.TryGetValue(key, out var aByText))
+                    {
+                        ans = aByText;
+                    }
+                }
+
+                combined.Add(new UserQuestionAnswerWithQuestionDTO
+                {
+                    QuestionId = q.Id,
+                    QuestionText = q.Text ?? $"Question {q.Id}",
+                    Answer = ans ?? "",
+                    CreatedAt = DateTime.MinValue,
+                    UpdatedAt = DateTime.MinValue,
+                    UserId = currentUserId
+                });
+            }
+
+            if (!combined.Any() && answers.Any())
+            {
+                combined = answers.Select(a => new UserQuestionAnswerWithQuestionDTO
+                {
+                    QuestionId = a.QuestionId,
+                    QuestionText = a.QuestionText,
+                    Answer = a.Answer,
+                    CreatedAt = a.CreatedAt,
+                    UpdatedAt = a.UpdatedAt,
+                    UserId = a.UserId
+                }).ToList();
+            }
+
+            userQuestionAnswers = combined;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoadPersonalPerspectiveData] Exception: {ex}");
+        }
+        finally
+        {
+            try
+            {
+                await LoadHowHeardData();
+            }
+            catch (Exception hx)
+            {
+                Console.WriteLine($"[LoadPersonalPerspectiveData] LoadHowHeardData failed: {hx}");
+            }
+        }
+    }
+
+    private async Task LoadHowHeardData()
+    {
+        try
+        {
+            
+            if (string.IsNullOrEmpty(currentUserEmail))
+            {
+                Console.WriteLine("[LoadHowHeardData] No currentUserEmail, skip fetching user heard-about data.");
+                return;
+            }
+            var endpoint = $"api/HeardAbout/user/{Uri.EscapeDataString(currentUserEmail)}";
+            var resp = await Http.GetAsync(endpoint);
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[LoadHowHeardData] Endpoint returned {(int)resp.StatusCode}");
+                return;
+            }
+
+            var content = await resp.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                Console.WriteLine("[LoadHowHeardData] Empty response body");
+                return;
+            }
+
+            using var doc = System.Text.Json.JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+                var knownMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "kpmgWebsite", "KPMG Website" },
+                { "universityClubs", "University Clubs" },
+                { "others", "Others" },
+                { "facebookGroup", "Facebook Group" },
+                { "universityWebsite", "University Website" },
+                { "kpmgPresentation", "KPMG Presentation" },
+                { "kpmgSocialMedia", "KPMG Social Media" },
+                { "tiktok", "TikTok" },
+                { "careerTalk", "Career Talk" },
+                { "professor", "Professor" },
+                { "campusAmbassadors", "Campus Ambassadors" }
+            };
+
+                var opts = new List<HowHeardOptionDTO>();
+                var sel = new List<string>();
+                int idx = 1;
+
+                foreach (var kv in knownMap)
+                {
+                    var key = kv.Key;
+                    var label = kv.Value;
+                    bool value = false;
+                    if (root.TryGetProperty(key, out var prop) && prop.ValueKind == JsonValueKind.True)
+                    {
+                        value = true;
+                    }
+
+                    opts.Add(new HowHeardOptionDTO { Id = idx++, OptionText = label });
+                    if (value) sel.Add(label);
+                }
+
+                howHeardOptions = opts;
+                userSelectedHowHeard = sel;
+
+                if (root.TryGetProperty("agreeToTerms", out var agreeProp) && agreeProp.ValueKind == JsonValueKind.True)
+                {
+                    agreeToTermsSelected = true;
+                }
+                else
+                {
+                    agreeToTermsSelected = false;
+                }
+            }
+            else
+            {
+            }
+            if ((howHeardOptions == null || !howHeardOptions.Any()) && userSelectedHowHeard?.Any() == true)
+            {
+                howHeardOptions = userSelectedHowHeard
+                    .Select((s, i) => new HowHeardOptionDTO { Id = i + 1, OptionText = s })
+                    .ToList();
+            }
+
+            Console.WriteLine($"[LoadHowHeardData] User selected how-heard count = {userSelectedHowHeard?.Count ?? 0}, agree={agreeToTermsSelected}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoadHowHeardData] Exception: {ex}");
+        }
+    }
+
+    private async Task LoadPhotoAndAttachments()
+    {
+        try
+        {
+            if (currentUserId > 0)
+            {
+                Console.WriteLine($"[LoadPhotoAndAttachments] Loading transcripts/attachments by userId {currentUserId}");
+                transcripts = await GetJsonSafe<List<TranscriptDTO>>($"api/Transcript/userid/{currentUserId}") ?? new();
+                attachments = await GetJsonSafe<List<AttachmentsDTO>>($"api/Attachments/userid/{currentUserId}") ?? new();
+
+                var photoById = await GetJsonSafe<PhotoResponse>($"api/Photo/userid/{currentUserId}");
+                if (photoById != null && !string.IsNullOrEmpty(photoById.ImageSrc))
+                {
+                    userPhotoBase64 = photoById.ImageSrc;
+                }
+            }
+
+            if ((transcripts == null || !transcripts.Any()) && !string.IsNullOrEmpty(currentUserEmail))
+            {
+                Console.WriteLine("[LoadPhotoAndAttachments] Fallback load by email");
+                var photoResponse = await GetJsonSafe<PhotoResponse>($"api/Photo/base64/{Uri.EscapeDataString(currentUserEmail)}");
+                if (photoResponse != null && !string.IsNullOrEmpty(photoResponse.ImageSrc))
+                {
+                    userPhotoBase64 = photoResponse.ImageSrc;
+                }
+
+                transcripts = await GetJsonSafe<List<TranscriptDTO>>($"api/Transcript/user/{Uri.EscapeDataString(currentUserEmail)}") ?? transcripts ?? new();
+                attachments = await GetJsonSafe<List<AttachmentsDTO>>($"api/Attachments/user/{Uri.EscapeDataString(currentUserEmail)}") ?? attachments ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoadPhotoAndAttachments] Exception: {ex}");
+        }
+    }
+
+    private string GetUniversityName(string? universityCode) =>
+        string.IsNullOrEmpty(universityCode) ? "Unknown" :
+        universities.FirstOrDefault(u => u.Code == universityCode)?.DisplayName ?? universityCode;
+
+    private string GetMajorName(string? majorCode) =>
+        string.IsNullOrEmpty(majorCode) ? "Unknown" :
+        majors.FirstOrDefault(m => m.Code == majorCode)?.DisplayName ?? majorCode;
+
+    private string GetDegreeName(string? degreeCode) =>
+        string.IsNullOrEmpty(degreeCode) ? "Unknown" :
+        degrees.FirstOrDefault(d => d.Code == degreeCode)?.DisplayName ?? degreeCode;
+
+    private string GetQualificationName(string? qualificationCode) =>
+        string.IsNullOrEmpty(qualificationCode) ? "N/A" :
+        qualifications.FirstOrDefault(q => q.Code == qualificationCode)?.DisplayName ?? qualificationCode;
+
+    private string GetQualificationStatusName(string? statusCode) =>
+        string.IsNullOrEmpty(statusCode) ? "N/A" :
+        qualificationStatuses.FirstOrDefault(s => s.Code == statusCode)?.DisplayName ?? statusCode;
+
+    private string GetLevelSkillName(string? levelSkillCode) =>
+        string.IsNullOrEmpty(levelSkillCode) ? "N/A" :
+        skillLevels.FirstOrDefault(l => l.Code == levelSkillCode)?.DisplayName ?? levelSkillCode;
+
+    private string GetEmploymentTypeName(string? employmentTypeCode) =>
+        string.IsNullOrEmpty(employmentTypeCode) ? "N/A" :
+        employmentTypes.FirstOrDefault(e => e.Code == employmentTypeCode)?.DisplayName ?? employmentTypeCode;
+
+    private string GetLocationName(string? locationCode) =>
+        string.IsNullOrEmpty(locationCode) ? "N/A" :
+        offices.FirstOrDefault(l => l.Code == locationCode)?.DisplayName ?? locationCode;
+
+    private string GetPreferenceName(string? preferenceCode) =>
+        string.IsNullOrEmpty(preferenceCode) ? "N/A" :
+        preferences.FirstOrDefault(p => p.Code == preferenceCode)?.DisplayName ?? preferenceCode;
+
+    private string GetCityName(string? cityCode) =>
+        string.IsNullOrEmpty(cityCode) ? "N/A" :
+        cities.FirstOrDefault(c => c.Code == cityCode)?.DisplayName ?? cityCode;
+
+    private async Task ViewTranscript(int transcriptId)
+    {
+        var baseUrl = Http.BaseAddress?.ToString()?.TrimEnd('/');
+        var url = $"{baseUrl}/api/Transcript/view/{transcriptId}";
+        await JSRuntime.InvokeVoidAsync("window.open", url, "_blank");
+    }
+
+    private async Task ViewAttachment(int attachmentId)
+    {
+        var baseUrl = Http.BaseAddress?.ToString()?.TrimEnd('/');
+        var url = $"{baseUrl}/api/Attachments/view/{attachmentId}";
+        await JSRuntime.InvokeVoidAsync("window.open", url, "_blank");
+    }
+
+    private async Task PrintApplication()
+    {
+        await JSRuntime.InvokeVoidAsync("window.print");
+    }
+
+    private string GetDecryptedIDCard()
+    {
+        try
+        {
+            if (userInfo == null)
+                return "N/A";
+
+            if (!string.IsNullOrEmpty(userInfo.IDCardNoEncrypted))
+            {
+                var decrypted = EncryptionService.Decrypt(userInfo.IDCardNoEncrypted);
+
+                Console.WriteLine($"[AUDIT] IDCard decrypted for User {userInfo.Id} in Review page at {DateTime.UtcNow}");
+
+                return decrypted ?? "N/A";
+            }
+
+            if (!string.IsNullOrEmpty(userInfo.PasswordHash) &&
+                !userInfo.PasswordHash.StartsWith("$2")) 
+            {
+                Console.WriteLine($"[FALLBACK] Using PasswordHash as plaintext for User {userInfo.Id}");
+                return userInfo.PasswordHash;
+            }
+
+            return "N/A";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Failed to decrypt IDCard for User {userInfo?.Id}: {ex.Message}");
+            return "***ERROR***";
+        }
+    }
+
+    private void BackToApplicationForm()
+    {
+        Navigation.NavigateTo("/step4");
+    }
+
+    private void Close()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public class PhotoResponse
+    {
+        public string ImageSrc { get; set; } = "";
+    }
+
+    public class UserQuestionAnswerWithQuestionDTO
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public int QuestionId { get; set; }
+        public string QuestionText { get; set; } = "";
+        public string Answer { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+}
+
+
+

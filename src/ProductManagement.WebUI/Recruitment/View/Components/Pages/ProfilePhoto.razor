@@ -1,0 +1,1193 @@
+﻿@page "/step4"
+@using Domain.DTO
+@using Domain.Entities
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@using System.Net.Http.Headers
+@using System.Text.Json
+@using System.Security.Claims
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject IHttpClientFactory ClientFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+
+<div class="container mt-4">
+    <div class="kpmg-header">
+        <h1 class="kpmg-title mb-2">KPMG ONLINE APPLICATION</h1>
+    </div>
+
+    <div class="container">
+        <div class="step-info mb-4">
+            <span class="fst-italic"><strong>Step 4 of 4</strong> <span class="fw-light"> Required fields are indicated by <span class="required-asterisk">*</span> (Please complete this form in English)</span></span>
+        </div>
+        <div class="form-container">
+            <div class="education-section">
+                YOUR PHOTO (CHOOSE FILE THEN CLICK ON [UPLOAD] BUTTON)<span class="required-asterisk">*</span>
+            </div>
+
+            <div class="form-content">
+                <EditForm Model="photoModel" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="row grey-light">
+                        <div class="col-md-8">
+                            <div class="text-center mb-4">
+                                @if (!string.IsNullOrEmpty(currentPhotoUrl))
+                                {
+                                    <div class="">
+                                        @if (!string.IsNullOrEmpty(imageSrc))
+                                        {
+                                            <img class="cts-width mt-4" src="@imageSrc" alt="User Photo" />
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="mt-3">
+                                        <div class="no-photo-placeholder">
+                                            <div class="placeholder-icon">
+                                                <i class="fas fa-user fa-3x"></i>
+                                            </div>
+                                            <div class="placeholder-text">No photo selected</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="row mb-2">
+                                    <div class="col-md-2 text-end">
+                                        <label class="form-label fw-bold">Your photo</label>
+                                    </div>
+                                    <div class="col-md-6 mt-1">
+                                        <InputFile OnChange="OnFileSelected"
+                                                   accept=".jpg,.jpeg,.png"
+                                                   class="form-control custom-input"
+                                                   disabled="@isUploading" />
+                                        <div class="fst-italic fw-bold note-custom mt-1">(JPG | PNG | 1MB maximum)</div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-2"></div>
+                                    <div class="col-md-3">
+                                        <button type="button"
+                                                class="btn custom-btn1"
+                                                @onclick="UploadPhoto"
+                                                disabled="@(isUploading)">
+                                            @if (isUploading)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                <span>Uploading...</span>
+                                            }
+                                            else
+                                            {
+                                                @(string.IsNullOrEmpty(currentPhotoUrl) ? "Upload" : "Update")
+                                            }
+                                        </button>
+
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(errorMessage))
+                                {
+                                    <div class="validation-message mt-2">
+                                        @errorMessage
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(successMessage))
+                                {
+                                    <div class="success-message mt-2">
+                                        @successMessage
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+
+        <div class="form-container mt-4">
+            <div class="education-section">
+                TRANSCRIPTS (CHOOSE FILE THEN CLICK ON [UPLOAD] BUTTON)<span class="required-asterisk">*</span>
+            </div>
+
+
+            <div class="form-content grey-weight pt-3 ps-1">
+                <div class="nav-bg col-md-7 mb-4">
+                    <div class="row px-2 pt-1">
+                        <div class="col-md-3 text-end">
+                            <label class="form-label fw-bold">For University</label>
+                        </div>
+                        <div class="col-md-9 mt-2">
+                            <select class="form-select-sm custom-input cts-width-100" @bind="selectedUniversityIdForTranscript">
+                                <option value="">Select University</option>
+                                @foreach (var university in userUniversities)
+                                {
+                                    <option value="@university.Id">@university.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row px-2 pt-1">
+                        <div class="col-md-3 text-end">
+                            <label class="form-label fw-bold">Transcript</label>
+                        </div>
+                        <div class="col-md-6 mt-1">
+                            <InputFile OnChange="OnTranscriptFileSelected"
+                                       accept=".jpg,.jpeg,.png,.pdf"
+                                       class="form-control custom-input"
+                                       disabled="@isUploadingTranscript" />
+                            <div class="fst-italic fw-bold note-custom mt-1">(JPG | PNG | PDF | 2MB maximum)</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-6 mb-1">
+                            <button type="button"
+                                    class="btn custom-btn1"
+                                    @onclick="UploadTranscript"
+                                    disabled="@(isUploadingTranscript || selectedTranscriptFile == null || selectedUniversityIdForTranscript == 0)">
+                                @if (isUploadingTranscript)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Uploading...</span>
+                                }
+                                else
+                                {
+                                    @(transcripts.Count == 0 ? "Upload" : "Upload Another")
+                                }
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(transcriptErrorMessage))
+                {
+                    <div class="validation-message p-3">
+                        @transcriptErrorMessage
+                    </div>
+                }
+
+
+                @if (!string.IsNullOrEmpty(transcriptSuccessMessage))
+                {
+                    <div class="success-message p-3">
+                        @transcriptSuccessMessage
+                    </div>
+                }
+                <div class="pe-1">
+                    <h7 style="color:#333333" class="fw-bolder">Transcripts</h7>
+                    @if (transcripts.Any())
+                    {
+                        <div class="table-responsive mt-2">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead class="text-dark fw-bolder">
+                                    <tr>
+                                        <th class="text-start col-md-8">University</th>
+                                        <th class="text-start col-md-2">File</th>
+                                        <th class="text-start col-md-2">Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var transcript in transcripts)
+                                    {
+                                        <tr>
+                                            <td class="text-start">
+                                                @if (!string.IsNullOrEmpty(transcript.UniversityName))
+                                                {
+                                                    @transcript.UniversityName
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">
+                                                        @transcript.UniversityCode (Name not found)
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="text-start">
+                                                <button type="button" class="btn btn-link fs-custom" @onclick="() => ViewTranscriptFile(transcript.Id)">
+                                                    View File
+                                                </button>
+                                            </td>
+                                            <td class="text-start">
+                                                <button type="button" class="btn btn-link fs-custom" @onclick="() => DeleteTranscript(transcript.Id)">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        <div class="form-container mt-4">
+            <div class="education-section">
+                OTHER ATTACHMENTS (CHOOSE FILE THEN CLICK ON [ADD] BUTTON)
+            </div>
+
+
+            <div class="form-content grey-light pt-4 px-1">
+                <div class="nav-bg mb-3">
+                    <div class="cts-width">
+                        <div class="row p-3">
+                            <div class="col-md-3 text-end">
+                                <label class="form-label fw-bold">Name</label>
+                            </div>
+                            <div class="col-md-6 mt-1">
+                                <input type="text" class="form-select-sm custom-input cts-width-100" @bind="attachmentName" />
+                            </div>
+                        </div>
+                        <div class="row px-2 pt-1">
+                            <div class="col-md-3 text-end">
+                                <label class="form-label fw-bold">File</label>
+                            </div>
+                            <div class="col-md-6 mt-1">
+                                <InputFile OnChange="OnAttachmentFileSelected"
+                                           accept=".jpg,.jpeg,.png,.pdf"
+                                           class="form-control custom-input"
+                                           disabled="@isUploadingAttachment" />
+                                <div class="fst-italic fw-bold note-custom mt-1">(JPG | PNG | PDF | 2MB maximum)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2"></div>
+                        <div class="col-md-10 pe-1 px-3">
+                            <div class="mt-2 text-danger" style="font-size: 0.85rem;">
+                                Note: If you have language proficiency test (IELTS, TOEIC, TOEFL, etc) or professional qualifications (ACCA, CFA, ICAEW, etc), please attach your certificate here (Otherwise, your result will not be acknowledged).
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row p-3 cts-width">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-6">
+                            <button type="button"
+                                    class="btn custom-btn1"
+                                    @onclick="AddAttachment"
+                                    disabled="@(isUploadingAttachment || selectedAttachmentFile == null || string.IsNullOrEmpty(attachmentName))">
+                                @if (isUploadingAttachment)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Adding...</span>
+                                }
+                                else
+                                {
+                                    @(attachments.Count == 0 ? "Add" : "Add Another")
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(attachmentErrorMessage))
+                {
+                    <div class="validation-message p-3">
+                        @attachmentErrorMessage
+                    </div>
+                }
+
+
+                @if (!string.IsNullOrEmpty(attachmentSuccessMessage))
+                {
+                    <div class="success-message p-3">
+                        @attachmentSuccessMessage
+                    </div>
+                }
+                <div class="pe-1">
+                    <h7 style="color:#333333" class="fw-bolder">Attachments</h7>
+                    @if (attachments.Any())
+                    {
+                        <div class="table-responsive mt-2">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead class="text-dark fw-bolder">
+                                    <tr class="">
+                                        <th class="text-start col-md-8">Name</th>
+                                        <th class="text-start col-md-2">File</th>
+                                        <th class="text-start col-md-2">Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var attachment in attachments)
+                                    {
+                                        <tr>
+                                            <td class="text-start">@attachment.AttachmentName</td>
+                                            <td class="text-start">
+                                                <button type="button" class="btn btn-link btn-sm fs-custom" @onclick="() => ViewAttachmentFile(attachment.Id)">
+                                                    View File
+                                                </button>
+                                            </td>
+                                            <td class="text-start">
+                                                <button type="button" class="btn btn-link btn-sm fs-custom" @onclick="() => DeleteAttachment(attachment.Id)">
+                                                    Delete
+                                                </button>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="form-container mt-4">
+            <div class="education-section">
+                PLEASE LET US KNOW HOW YOU HEARD ABOUT KPMG<span class="required-asterisk">*</span>
+            </div>
+
+            <div class="form-content pt-3 grey-weight">
+                <div class="row mb-3 mx-3">
+                    <div class="col-md-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="kpmgWebsite" @bind="heardAbout.KpmgWebsite">
+                            <label class="form-check-label" for="kpmgWebsite">KPMG Website</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="universityClubs" @bind="heardAbout.UniversityClubs">
+                            <label class="form-check-label" for="universityClubs">University Clubs</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="others" @bind="heardAbout.Others">
+                            <label class="form-check-label" for="others">Others</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="facebookGroup" @bind="heardAbout.FacebookGroup">
+                            <label class="form-check-label" for="facebookGroup">Facebook Group Chuyện nhà K Firm</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="universityWebsite" @bind="heardAbout.UniversityWebsite">
+                            <label class="form-check-label" for="universityWebsite">University Website</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="kpmgPresentation" @bind="heardAbout.KpmgPresentation">
+                            <label class="form-check-label" for="kpmgPresentation">KPMG Presentation</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="kpmgSocialMedia" @bind="heardAbout.KpmgSocialMedia">
+                            <label class="form-check-label" for="kpmgSocialMedia">KPMG Social Media</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="tiktok" @bind="heardAbout.Tiktok">
+                            <label class="form-check-label" for="tiktok">Tiktok Chiec.k.xanh.xanh</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="careerTalk" @bind="heardAbout.CareerTalk">
+                            <label class="form-check-label" for="careerTalk">Career Talk</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="professor" @bind="heardAbout.Professor">
+                            <label class="form-check-label" for="professor">Professor & Other Students</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="campusAmbassadors" @bind="heardAbout.CampusAmbassadors">
+                            <label class="form-check-label" for="campusAmbassadors">KPMG Campus Ambassadors</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mx-2 mt-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold">Collection and Use of Personal Information</h6>
+                        <p class="small mb-2">
+                            [KPMG Limited] ("KPMG") collects personal information that you voluntarily submit for use in connection with our various recruitment and employment purposes and processes. The following is KPMG's collection and use of personal information policy for the recruiting process:
+                        </p>
+                        <ul class="small">
+                            <li class="mb-2">KPMG will collect your personal information, such as name, address, emails, phone numbers, employment history, salary history, etc., through our recruiting process.</li>
+                            <li class="mb-2">KPMG requires a valid e-mail address as a login. This address allows us to communicate with your qualifications and/or preferences match job opportunities, or if you opt to receive automated notifications of job postings at KPMG. Once you create and submit a profile, it is stored in our database. At any time, you can "opt-out" of receiving further communications from KPMG by contacting KPMG Vietnam Recruiting <a href="mailto:vnrecruiting@kpmg.com.vn" class="text-primary">vnrecruiting@@kpmg.com.vn</a>.</li>
+                            <li class="mb-2">KPMG may use your personal information to contact you during your candidacy for employment, to send you announcements, or to request additional information as required. Further, should you be hired by KPMG, this information may be used by KPMG in connection with normal business activities and in connection with the employer-employee relationship. For details on KPMG's commitment to protect your privacy, click on <a href="https://kpmg.com/vn/en/home/misc/privacy.html" target="_blank" class="text-primary">https://kpmg.com/vn/en/home/misc/privacy.html</a>.</li>
+                            <li>KPMG will not share personal information with third parties unless it is necessary to carry out your business or as required by law or other legal processes, and we will never sell your personal information. We will, however, share data with system vendors, as well as with other companies who provide employment verification services, with service providers who process data on behalf of KPMG or provide other services for the conduct of KPMG's business. Furthermore, personal data collected by KPMG may be transferred to other member firms of KPMG International where it is necessary to meet the purpose for which you have submitted the information.</li>
+                        </ul>
+                    </div>
+                    <div class="col-12 px-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="agreeTerms" @bind="agreeToTerms">
+                            <label class="form-check-label fs-11 fw-bold text-primary" for="agreeTerms">
+                                The information you submit to KPMG must be complete and accurate to the best of your knowledge. The falsification of this information, falsification of other documents that you may provide, and/or the giving of incomplete information may result in the withdrawal of any employment offer and/or the immediate termination of your employment now or in the future.
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12 px-2 mt-3 mb-4">
+                        <span class="text-primary fw-bold small fs-11">*Note*:</span><br />
+                        <span class="small ms-4 text-primary fw-bold fs-11 fst-italic">- One candidate should create one application only. We will proceed your application based on the preference you indicated above.</span><br />
+                        <span class="small ms-4 text-primary fw-bold fs-11 fst-italic">- Once you click the 'submit' button, the application cannot be edited. Please make sure you check all information carefully before submitting.</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(heardAboutValidationMessage))
+                {
+                    <div class="validation-message mt-2">
+                        @heardAboutValidationMessage
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mt-4 p-3 mb-4 d-flex justify-content-center nav-bg">
+    <button @onclick="PreviousStep" type="button" class="btn custom-btn1 mx-2">
+        Back
+    </button>
+    <button type="button" class="btn custom-btn1 mx-2" @onclick="SaveApplication">
+        Save
+    </button>
+    <button type="button" class="btn custom-btn1 mx-2" @onclick="PreviewStep">
+        Preview
+    </button>
+    <button type="button" class="btn custom-btn1 mx-2" @onclick="SubmitApplication" disabled="@(string.IsNullOrEmpty(imageSrc))">
+        Submit
+    </button>
+</div>
+
+@code {
+    private PhotoModel photoModel = new();
+    private IBrowserFile? selectedFile;
+    private string currentPhotoUrl = string.Empty;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+    private bool isUploading = false;
+    private string userEmail = string.Empty;
+    private const long maxFileSize = 1024 * 1024;
+    private string imageSrc = "";
+
+
+    private List<SystemConfigurationDTO> userUniversities = new();
+    private List<TranscriptDTO> transcripts = new();
+    private IBrowserFile? selectedTranscriptFile;
+    private int selectedUniversityIdForTranscript = 0;
+    private string selectedUniversityCodeForTranscript = "";
+    private string transcriptErrorMessage = string.Empty;
+    private string transcriptSuccessMessage = string.Empty;
+    private bool isUploadingTranscript = false;
+    private const long maxTranscriptFileSize = 2 * 1024 * 1024;
+
+
+    private List<AttachmentsDTO> attachments = new();
+    private IBrowserFile? selectedAttachmentFile;
+    private string attachmentName = "";
+    private string attachmentErrorMessage = string.Empty;
+    private string attachmentSuccessMessage = string.Empty;
+    private bool isUploadingAttachment = false;
+    private const long maxAttachmentFileSize = 2 * 1024 * 1024;
+
+
+    private HeardAboutDTO heardAbout = new();
+    private bool agreeToTerms = false;
+    private string heardAboutValidationMessage = string.Empty;
+
+
+    private HttpClient Http => ClientFactory.CreateClient("LocalAPI");
+
+
+    public class PhotoModel
+    {
+        public string? PhotoUrl { get; set; }
+    }
+
+
+    public class PhotoUploadResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string PhotoUrl { get; set; } = string.Empty;
+        public int PhotoId { get; set; }
+    }
+
+
+    public class UserPhotoResponse
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public string FileName { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
+        public DateTime UploadedAt { get; set; }
+    }
+
+
+    public class PhotoResponse
+    {
+        public string ImageSrc { get; set; } = "";
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userEmail = user.FindFirst(c => c.Type == ClaimTypes.Name)?.Value ?? string.Empty;
+            Console.WriteLine($"userEmail set to: {userEmail}");
+        }
+
+        if (!string.IsNullOrEmpty(userEmail))
+        {
+            try
+            {
+                var response = await Http.GetFromJsonAsync<PhotoResponse>($"api/Photo/base64/{userEmail}");
+                if (response != null && !string.IsNullOrEmpty(response.ImageSrc))
+                {
+                    imageSrc = response.ImageSrc;
+                    currentPhotoUrl = response.ImageSrc;
+                    photoModel.PhotoUrl = response.ImageSrc;
+                }
+                else
+                {
+                    Console.WriteLine("No photo found - this is OK for first time users");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading photo (OK if first time): {ex.Message}");
+            }
+
+            await LoadUserUniversities();
+            await LoadHeardAbout();
+            await LoadTranscripts();
+            await LoadAttachments();
+        }
+    }
+
+    private async Task LoadUserUniversities()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                Console.WriteLine("[LoadUserUniversities] userEmail is empty");
+                transcriptErrorMessage = "User email not found. Please login again.";
+                return;
+            }
+
+            Console.WriteLine($"[LoadUserUniversities] Loading universities for: {userEmail}");
+
+            var response = await Http.GetFromJsonAsync<List<SystemConfigurationDTO>>(
+                $"api/University/user/{Uri.EscapeDataString(userEmail)}");
+
+            if (response != null && response.Any())
+            {
+                userUniversities = response;
+                Console.WriteLine($"[LoadUserUniversities] Successfully loaded {userUniversities.Count} universities");
+
+                foreach (var uni in userUniversities)
+                {
+                    Console.WriteLine($"  - Id: {uni.Id}, Code: {uni.Code}, Name: {uni.DisplayName}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("[LoadUserUniversities] API returned null or empty list");
+                transcriptErrorMessage = "No universities found. Please complete Step 2 (Education) first.";
+                userUniversities = new List<SystemConfigurationDTO>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LoadUserUniversities] Exception: {ex.Message}");
+            Console.WriteLine($"[LoadUserUniversities] Stack trace: {ex.StackTrace}");
+            transcriptErrorMessage = $"Failed to load your universities: {ex.Message}";
+            userUniversities = new List<SystemConfigurationDTO>();
+        }
+    }
+
+    private async Task LoadTranscripts()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<TranscriptDTO>>($"api/Transcript/user/{userEmail}");
+            if (response != null)
+            {
+                transcripts = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading transcripts: {ex.Message}");
+        }
+    }
+
+
+    private async Task LoadAttachments()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<AttachmentsDTO>>($"api/Attachments/user/{userEmail}");
+            if (response != null)
+            {
+                attachments = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading attachments: {ex.Message}");
+        }
+    }
+
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+
+        if (selectedFile != null)
+        {
+            if (selectedFile.Size > maxFileSize)
+            {
+                errorMessage = "File size must be less than 1MB.";
+                selectedFile = null;
+                return;
+            }
+
+
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png" };
+            if (!allowedTypes.Contains(selectedFile.ContentType.ToLower()))
+            {
+                errorMessage = "Only JPG and PNG files are allowed.";
+                selectedFile = null;
+                return;
+            }
+        }
+
+
+        StateHasChanged();
+    }
+
+
+    private async Task UploadPhoto()
+    {
+        if (selectedFile == null) return;
+
+
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            errorMessage = "Email người dùng chưa được thiết lập.";
+            Console.WriteLine("userEmail is empty or null.");
+            return;
+        }
+
+
+        Console.WriteLine($"Uploading photo for userEmail: {userEmail}");
+        Console.WriteLine($"File name: {selectedFile.Name}, ContentType: {selectedFile.ContentType}, Size: {selectedFile.Size}");
+
+
+        try
+        {
+            isUploading = true;
+            errorMessage = string.Empty;
+            StateHasChanged();
+
+
+            using var content = new MultipartFormDataContent();
+
+
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxFileSize));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "Photo", selectedFile.Name);
+            content.Add(new StringContent(userEmail), "UserEmail");
+
+
+            var response = await Http.PostAsync("/api/Photo/upload", content);
+
+
+            Console.WriteLine($"Server response: {response.StatusCode} - {response.ReasonPhrase}");
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<PhotoUploadResponse>(jsonResponse, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+
+                if (result?.Success == true)
+                {
+                    currentPhotoUrl = result.PhotoUrl;
+                    photoModel.PhotoUrl = result.PhotoUrl;
+                    successMessage = result.Message;
+                    selectedFile = null;
+                    var updatedPhoto = await Http.GetFromJsonAsync<PhotoResponse>($"api/Photo/base64/{userEmail}");
+                    imageSrc = updatedPhoto?.ImageSrc ?? "";
+                    StateHasChanged();
+                }
+                else
+                {
+                    errorMessage = result?.Message ?? "Upload failed";
+                }
+            }
+            else
+            {
+                errorMessage = $"Upload failed: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Upload failed: {ex.Message}";
+            Console.WriteLine($"Exception during upload: {ex}");
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+
+    private async Task OnTranscriptFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedTranscriptFile = e.File;
+        transcriptErrorMessage = string.Empty;
+        transcriptSuccessMessage = string.Empty;
+
+
+        if (selectedTranscriptFile != null)
+        {
+            if (selectedTranscriptFile.Size > maxTranscriptFileSize)
+            {
+                transcriptErrorMessage = "File size must be less than 2MB.";
+                selectedTranscriptFile = null;
+                return;
+            }
+
+
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "application/pdf" };
+            if (!allowedTypes.Contains(selectedTranscriptFile.ContentType.ToLower()))
+            {
+                transcriptErrorMessage = "Only JPG, PNG and PDF files are allowed.";
+                selectedTranscriptFile = null;
+                return;
+            }
+        }
+
+
+        StateHasChanged();
+    }
+
+
+    private async Task UploadTranscript()
+    {
+        if (selectedTranscriptFile == null || selectedUniversityIdForTranscript == 0)
+            return;
+
+        try
+        {
+            isUploadingTranscript = true;
+            transcriptErrorMessage = string.Empty;
+            StateHasChanged();
+
+            var selectedUni = userUniversities.FirstOrDefault(u => u.Id == selectedUniversityIdForTranscript);
+            if (selectedUni == null)
+            {
+                transcriptErrorMessage = "Selected university not found";
+                return;
+            }
+
+            Console.WriteLine($"[Upload] Selected University:");
+            Console.WriteLine($"  - Id: {selectedUni.Id}");
+            Console.WriteLine($"  - Code: {selectedUni.Code}");
+            Console.WriteLine($"  - DisplayName: {selectedUni.DisplayName}");
+
+            using var content = new MultipartFormDataContent();
+
+            var fileContent = new StreamContent(
+                selectedTranscriptFile.OpenReadStream(maxTranscriptFileSize));
+            fileContent.Headers.ContentType =
+                new MediaTypeHeaderValue(selectedTranscriptFile.ContentType);
+
+            content.Add(fileContent, "TranscriptFile", selectedTranscriptFile.Name);
+            content.Add(new StringContent(userEmail), "UserEmail");
+
+            content.Add(new StringContent(selectedUni.Code), "UniversityCode");
+
+            var response = await Http.PostAsync("/api/Transcript/upload", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<TranscriptUploadResponse>(
+                    jsonResponse,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (result?.Success == true)
+                {
+                    transcriptSuccessMessage = result.Message;
+                    selectedTranscriptFile = null;
+                    selectedUniversityIdForTranscript = 0;
+                    await LoadTranscripts();
+                    StateHasChanged();
+                }
+                else
+                {
+                    transcriptErrorMessage = result?.Message ?? "Upload failed";
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                transcriptErrorMessage = $"Upload failed: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            transcriptErrorMessage = $"Upload failed: {ex.Message}";
+            Console.WriteLine($"Exception during transcript upload: {ex}");
+        }
+        finally
+        {
+            isUploadingTranscript = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteTranscript(int transcriptId)
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"api/Transcript/{transcriptId}");
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadTranscripts(); // Reload transcripts
+                transcriptSuccessMessage = "Transcript deleted successfully.";
+                StateHasChanged();
+            }
+            else
+            {
+                transcriptErrorMessage = "Failed to delete transcript.";
+            }
+        }
+        catch (Exception ex)
+        {
+            transcriptErrorMessage = $"Error deleting transcript: {ex.Message}";
+        }
+    }
+
+
+    private async Task ViewTranscriptFile(int transcriptId)
+    {
+        var baseUrl = Http.BaseAddress?.ToString()?.TrimEnd('/');
+        var url = $"{baseUrl}/api/Transcript/view/{transcriptId}";
+        await JSRuntime.InvokeVoidAsync("window.open", url, "_blank");
+    }
+
+
+    private async Task OnAttachmentFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedAttachmentFile = e.File;
+        attachmentErrorMessage = string.Empty;
+        attachmentSuccessMessage = string.Empty;
+
+
+        if (selectedAttachmentFile != null)
+        {
+            if (selectedAttachmentFile.Size > maxAttachmentFileSize)
+            {
+                attachmentErrorMessage = "File size must be less than 2MB.";
+                selectedAttachmentFile = null;
+                return;
+            }
+
+
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "application/pdf" };
+            if (!allowedTypes.Contains(selectedAttachmentFile.ContentType.ToLower()))
+            {
+                attachmentErrorMessage = "Only JPG, PNG and PDF files are allowed.";
+                selectedAttachmentFile = null;
+                return;
+            }
+        }
+
+
+        StateHasChanged();
+    }
+
+
+    private async Task AddAttachment()
+    {
+        if (selectedAttachmentFile == null || string.IsNullOrEmpty(attachmentName)) return;
+
+
+        try
+        {
+            isUploadingAttachment = true;
+            attachmentErrorMessage = string.Empty;
+            StateHasChanged();
+
+
+            using var content = new MultipartFormDataContent();
+
+
+            var fileContent = new StreamContent(selectedAttachmentFile.OpenReadStream(maxAttachmentFileSize));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(selectedAttachmentFile.ContentType);
+            content.Add(fileContent, "AttachmentFile", selectedAttachmentFile.Name);
+            content.Add(new StringContent(userEmail), "UserEmail");
+            content.Add(new StringContent(attachmentName), "AttachmentName");
+
+
+            var response = await Http.PostAsync("/api/Attachments/upload", content);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<AttachmentUploadResponse>(jsonResponse, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+
+                if (result?.Success == true)
+                {
+                    attachmentSuccessMessage = result.Message;
+                    selectedAttachmentFile = null;
+                    attachmentName = "";
+                    await LoadAttachments();
+                    StateHasChanged();
+                }
+                else
+                {
+                    attachmentErrorMessage = result?.Message ?? "Upload failed";
+                }
+            }
+            else
+            {
+                attachmentErrorMessage = $"Upload failed: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            attachmentErrorMessage = $"Upload failed: {ex.Message}";
+            Console.WriteLine($"Exception during attachment upload: {ex}");
+        }
+        finally
+        {
+            isUploadingAttachment = false;
+            StateHasChanged();
+        }
+    }
+
+
+    private async Task DeleteAttachment(int attachmentId)
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"api/Attachments/{attachmentId}");
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadAttachments(); // Reload attachments
+                attachmentSuccessMessage = "Attachment deleted successfully.";
+                StateHasChanged();
+            }
+            else
+            {
+                attachmentErrorMessage = "Failed to delete attachment.";
+            }
+        }
+        catch (Exception ex)
+        {
+            attachmentErrorMessage = $"Error deleting attachment: {ex.Message}";
+        }
+    }
+
+
+    private async Task ViewAttachmentFile(int attachmentId)
+    {
+        var baseUrl = Http.BaseAddress?.ToString()?.TrimEnd('/');
+        var url = $"{baseUrl}/api/Attachments/view/{attachmentId}";
+        await JSRuntime.InvokeVoidAsync("window.open", url, "_blank");
+
+    }
+
+    private async Task SaveApplication()
+    {
+        try
+        {
+            heardAboutValidationMessage = string.Empty;
+            errorMessage = string.Empty;
+
+            var saveRequest = new
+            {
+                UserEmail = userEmail,
+                KpmgWebsite = heardAbout.KpmgWebsite,
+                UniversityClubs = heardAbout.UniversityClubs,
+                Others = heardAbout.Others,
+                FacebookGroup = heardAbout.FacebookGroup,
+                UniversityWebsite = heardAbout.UniversityWebsite,
+                KpmgPresentation = heardAbout.KpmgPresentation,
+                KpmgSocialMedia = heardAbout.KpmgSocialMedia,
+                Tiktok = heardAbout.Tiktok,
+                CareerTalk = heardAbout.CareerTalk,
+                Professor = heardAbout.Professor,
+                CampusAmbassadors = heardAbout.CampusAmbassadors,
+                AgreeToTerms = agreeToTerms
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/HeardAbout/save", saveRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<HeardAboutSaveResponse>();
+                if (result?.Success == true)
+                {
+                    successMessage = "Application saved successfully!";
+                    Console.WriteLine("HeardAbout data saved successfully");
+                }
+                else
+                {
+                    errorMessage = result?.Message ?? "Failed to save";
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Save failed: {response.StatusCode} - {errorContent}";
+                Console.WriteLine($"Save error: {errorMessage}");
+            }
+
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Save failed: {ex.Message}";
+            Console.WriteLine($"Exception during save: {ex}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            StateHasChanged();
+        }
+    }
+
+    public class HeardAboutSaveResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
+    private async Task LoadHeardAbout()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<HeardAboutDTO>($"api/HeardAbout/user/{userEmail}");
+            if (response != null)
+            {
+                heardAbout.KpmgWebsite = response.KpmgWebsite;
+                heardAbout.UniversityClubs = response.UniversityClubs;
+                heardAbout.Others = response.Others;
+                heardAbout.FacebookGroup = response.FacebookGroup;
+                heardAbout.UniversityWebsite = response.UniversityWebsite;
+                heardAbout.KpmgPresentation = response.KpmgPresentation;
+                heardAbout.KpmgSocialMedia = response.KpmgSocialMedia;
+                heardAbout.Tiktok = response.Tiktok;
+                heardAbout.CareerTalk = response.CareerTalk;
+                heardAbout.Professor = response.Professor;
+                heardAbout.CampusAmbassadors = response.CampusAmbassadors;
+                agreeToTerms = response.AgreeToTerms;
+
+                Console.WriteLine("HeardAbout data loaded successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading heard about: {ex.Message}");
+        }
+    }
+
+    private async Task SubmitApplication()
+    {
+        try
+        {
+            heardAboutValidationMessage = string.Empty;
+            errorMessage = string.Empty;
+
+
+            if (!heardAbout.HasAnySelection())
+            {
+                heardAboutValidationMessage = "Please select at least one option for how you heard about KPMG.";
+                StateHasChanged();
+                return;
+            }
+            if (!agreeToTerms)
+            {
+                heardAboutValidationMessage = "Please agree to the terms and conditions before submitting.";
+                StateHasChanged();
+                return;
+            }
+            var saveRequest = new
+            {
+                UserEmail = userEmail,
+                KpmgWebsite = heardAbout.KpmgWebsite,
+                UniversityClubs = heardAbout.UniversityClubs,
+                Others = heardAbout.Others,
+                FacebookGroup = heardAbout.FacebookGroup,
+                UniversityWebsite = heardAbout.UniversityWebsite,
+                KpmgPresentation = heardAbout.KpmgPresentation,
+                KpmgSocialMedia = heardAbout.KpmgSocialMedia,
+                Tiktok = heardAbout.Tiktok,
+                CareerTalk = heardAbout.CareerTalk,
+                Professor = heardAbout.Professor,
+                CampusAmbassadors = heardAbout.CampusAmbassadors,
+                AgreeToTerms = agreeToTerms
+            };
+
+
+            var saveResponse = await Http.PostAsJsonAsync("/api/HeardAbout/save", saveRequest);
+
+            if (!saveResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await saveResponse.Content.ReadAsStringAsync();
+                heardAboutValidationMessage = $"Failed to save data: {errorContent}";
+                Console.WriteLine($"Submit error - save failed: {errorContent}");
+                StateHasChanged();
+                return;
+            }
+            var saveResult = await saveResponse.Content.ReadFromJsonAsync<HeardAboutSaveResponse>();
+            if (saveResult?.Success != true)
+            {
+                heardAboutValidationMessage = $"Failed to save data: {saveResult?.Message}";
+                StateHasChanged();
+                return;
+            }
+            Console.WriteLine("Application submitted successfully!");
+            Navigation.NavigateTo("/review");
+        }
+        catch (Exception ex)
+        {
+            heardAboutValidationMessage = $"Submit failed: {ex.Message}";
+            Console.WriteLine($"Exception during submit: {ex}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            StateHasChanged();
+        }
+    }
+
+    private void HandleValidSubmit()
+    {
+        Console.WriteLine("Application completed!");
+    }
+
+    private void PreviousStep()
+    {
+        Navigation.NavigateTo("/step3");
+        Console.WriteLine("Going to previous step...");
+    }
+
+    private void PreviewStep()
+    {
+        Navigation.NavigateTo("/review");
+        Console.WriteLine("Going to previous step...");
+    }
+}

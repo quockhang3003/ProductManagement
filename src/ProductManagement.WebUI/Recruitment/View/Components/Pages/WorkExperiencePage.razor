@@ -1,0 +1,1038 @@
+﻿@page "/step3"
+@using System.ComponentModel.DataAnnotations
+@using Domain.DTO
+@using Domain.Entities
+@using Microsoft.AspNetCore.Components.Authorization
+@using Service
+@using System.Security.Claims
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JSRuntime
+@inject SessionService SessionService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="kpmg-header">
+    <div class="container">
+        <h1 class="kpmg-title">KPMG ONLINE APPLICATION</h1>
+    </div>
+</div>
+
+<div class="container">
+    @if (isCheckingAuth)
+    {
+        <div class="text-center p-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Checking authentication...</p>
+        </div>
+    }
+    else if (!isAuthenticated)
+    {
+        <div class="alert alert-warning">
+            <h4>Authentication Required</h4>
+            <p>You need to complete Step 1 (Registration) before accessing this step.</p>
+            <a href="/step1" class="btn btn-primary">Go to Step 1</a>
+        </div>
+    }
+    else
+    {
+        @if (showSuccessMessage)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                @successMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (showErrorMessage)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                @errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="step-info mb-4">
+            <span class="fst-italic"><strong>Step 3 of 4</strong> <span class="fw-light"> Required fields are indicated by <span class="required-asterisk">*</span> (Please complete this form in English)</span></span>
+        </div>
+
+        <EditForm Model="@workExperienceModel" OnValidSubmit="@AddWorkExperience">
+            <DataAnnotationsValidator />
+            <div class="form-container">
+                <div class="education-section">
+                    WORK EXPERIENCE (OPTIONAL)
+                </div>
+                <div class="grey-light pt-2">
+                        <div class="form-content form-control-sm ms-1 mt-2 mb-3 col-md-8 nav-bg">
+                            <div class="row mb-1">
+                                <div class="col-md-4 custom-input text-end">
+                                    <label class="form-label">Start Date </label>
+                                </div>
+                                <div class="col-md-4 mt-1">
+                                    <InputDate @bind-Value="workExperienceModel.StartDate" class="custom-input cts-width form-control-sm" />
+                                    <ValidationMessage For="@(() => workExperienceModel.StartDate)" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-md-4 custom-input text-end">
+                                    <label class="form-label">End Date </label>
+                                </div>
+                                <div class="col-md-4 mt-1">
+                                    <InputDate @bind-Value="workExperienceModel.EndDate" class="custom-input cts-width form-control-sm" />
+                                    <ValidationMessage For="@(() => workExperienceModel.EndDate)" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-md-4 custom-input text-end">
+                                    <label class="form-label">Company Name </label>
+                                </div>
+                                <div class="col-md-8 mt-1">
+                                    <InputText class="form-control-sm custom-input cts-width" @bind-Value="workExperienceModel.CompanyName" />
+                                    <ValidationMessage For="@(() => workExperienceModel.CompanyName)" class="text-danger" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-md-4 custom-input text-end">
+                                    <label class="form-label">Job Title </label>
+                                </div>
+                                <div class="col-md-8 mt-1">
+                                    <InputText class="form-control-sm custom-input cts-width" @bind-Value="workExperienceModel.JobTitle" />
+                                    <ValidationMessage For="@(() => workExperienceModel.JobTitle)" class="text-danger" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-md-4 custom-input text-end">
+                                    <label class="form-label">Employment Type </label>
+                                </div>
+                                <div class="col-md-8 mt-1">
+                                    <InputSelect TValue="string"
+                                                 Value="workExperienceModel.EmploymentTypeCode"
+                                                 ValueChanged="@((string val) => workExperienceModel.EmploymentTypeCode = val)"
+                                                 ValueExpression="@(() => workExperienceModel.EmploymentTypeCode)"
+                                                 class="form-select-sm custom-input cts-width">
+                                        <option value="">-- Select Employment Type --</option>
+                                        @foreach (var employmentType in employmentTypes)
+                                        {
+                                            <option value="@employmentType.Code">@employmentType.DisplayName</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => workExperienceModel.EmploymentTypeCode)" class="text-danger" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-md-4 custom-input text-end">
+                                    <label class="form-label">Main Duties </label>
+                                </div>
+                                <div class="col-md-8 mt-1">
+                                <InputTextArea class=" custom-input cts-width custom-textarea custom-height valid" @bind-Value="workExperienceModel.MainDuties" />
+                                <ValidationMessage For="@(() => workExperienceModel.MainDuties)" class="text-danger" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4"></div>
+                                <span class="col-md-8 text-secondary">@GetWordCount(workExperienceModel.MainDuties) word(s) (100 max)</span>
+                            </div>
+                            
+                            <div class="row mb-1">
+                                <div class="col-md-4 custom-input text-end">
+                                    <label class="form-label">Achievement </label>
+                                </div>
+                                <div class="col-md-8 mt-1">
+                                <InputTextArea class=" custom-input cts-width custom-textarea custom-height valid" @bind-Value="workExperienceModel.Achievement" />
+                                <ValidationMessage For="@(() => workExperienceModel.Achievement)" class="text-danger" />
+                                </div>
+                            </div>
+
+                        <div class="row mb-2">
+                            <div class="col-md-4"></div>
+                            <div class="col-md-8">
+                                <button type="submit" class="btn custom-btn1 mb-2" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span>Adding...</span>
+                                    }
+                                    else
+                                    {
+                                        
+                                        <span>Add</span>
+                                    }
+                                </button>
+                            </div>
+                            <span class="fst-italic fs-custom step-info note-custom mb-1">Please list briefly all of your full time or part-time employment in chronological order since your starting university</span>
+                        </div>
+                    </div>
+                    <div class="mt-1 mx-1">
+                        <h7 style="color:#333333" class="fw-bolder">Internship/Employment</h7>
+                        @if (isLoading)
+                        {
+                            <div class="text-center p-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Loading Professional Qualification records...</p>
+                            </div>
+                        }
+                        else@if (workExperiences.Any())
+                        {
+                            <div class="table-responsive mt-2">
+                                <table class="table table-striped table-hover table-sm">
+                                    <thead class="text-dark fw-bolder">
+                                        <tr class="cts-color-background">
+                                            <th class="text-start">Duration</th>
+                                            <th class="text-start">Company Name</th>
+                                            <th class="text-start">Job Title</th>
+                                            <th class="text-start">Employment Type</th>
+                                            <th class="text-start">Main Duties</th>
+                                            <th class="text-start">Achievement</th>
+                                            <th class="text-start">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var workExperience in workExperiences)
+                                        {
+                                            <tr>
+                                                <td class="text-start">@workExperience.StartDate.ToString("MM/dd/yyyy") - @workExperience.EndDate.ToString("MM/dd/yyyy")</td>
+                                                <td class="text-start">@workExperience.CompanyName</td>
+                                                <td class="text-start">@workExperience.JobTitle</td>
+                                                <td class="text-start">@GetEmploymentTypeName(workExperience.EmploymentTypeCode)</td>
+                                                <td class="text-start">@workExperience.MainDuties</td>
+                                                <td class="text-start">@workExperience.Achievement</td>
+                                                <td class="text-start">
+                                                    <button type="button" class="btn btn-link fs-custom"
+                                                            @onclick="() => DeleteWorkExperience(workExperience.Id)"
+                                                            disabled="@isDeleting">
+                                                        @if (isDeleting && deletingId == workExperience.Id)
+                                                        {
+                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="fas fa-trash"></i>
+                                                        }
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="fw-bolder p-2 grey-light">Empty</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <ValidationSummary class="text-danger" />
+        </EditForm>
+        <div class="form-container mt-4">
+            <div class="education-section">
+                PERSONAL PERSPECTIVE & INTEREST
+            </div>
+            <div class="grey-weight pt-2 pb-2">
+                @foreach (var question in Questions)
+                {
+                    <div class="question-group @(question.IsActive ? "active" : "inactive")">
+                        @if (question.IsActive)
+                        {
+                            <div class="form-row mb-3">
+                                <label class="form-label p-1">@question.Text</label>
+                                <div class="row me-1">
+                                    <div class="col-md-12 custom-me">
+                                        <textarea class="col-md-12 custom-textarea custom-height valid rounded border-white border @(GetValidationClass(question))"
+                                                  @bind="question.Answer"
+                                                  @oninput="@(e => OnInputChange(question, e.Value?.ToString()))"
+                                                  rows="2"></textarea>
+                                        @if (question.HasError)
+                                        {
+                                            <div class="text-danger mt-1" style="font-size: 12px;">
+                                                This field is required.
+                                            </div>
+                                        }
+                                        @if (IsWordCountExceeded(question))
+                                        {
+                                            <div class="text-danger mt-1" style="font-size: 12px;">
+                                                You have exceeded the maximum word limit.
+                                            </div>
+                                        }
+                                        <span class="@(string.IsNullOrWhiteSpace(question.Answer) || GetWordCount(question.Answer) > question.MaxWords
+                                                      ? "text-danger fw-bold" : "text-secondary")">
+                                            @if (string.IsNullOrWhiteSpace(question.Answer))
+                                            {
+                                                <span>Answer required</span>
+                                                <span>@GetWordCount(question.Answer) word(s) (@question.MaxWords max)</span>
+                                            }
+                                            else if (GetWordCount(question.Answer) > question.MaxWords)
+                                            {
+                                                <span>Too many words</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@GetWordCount(question.Answer) word(s) (@question.MaxWords max)</span>
+                                            }
+                                        </span>
+
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="mt-4 p-3 mb-4 d-flex justify-content-center nav-bg">
+            <button @onclick="PreviousStep" type="button" class="btn custom-btn1 mx-2">
+                Back
+            </button>
+            <button @onclick="ManualSave" type="button" class="btn custom-btn1 mx-2">
+                Save
+            </button>
+            <button type="button" class="btn custom-btn1 mx-2" @onclick="SaveAndNext" disabled="@(!CanProceedNext())">
+                Next
+            </button>
+        </div>
+    }
+</div>
+@code {
+
+    public class QuestionViewModel
+    {
+        public int Id { get; set; }
+        public string Text { get; set; } = "";
+        public string Answer { get; set; } = "";
+        public int MaxWords { get; set; }
+        public bool IsActive { get; set; }
+        public bool HasError { get; set; }
+        public string UserId { get; set; } = "";
+        public DateTime? LastUpdated { get; set; }
+        public bool IsSaved { get; set; }
+        public bool IsRequired { get; set; } = true;
+        public int Order { get; set; }
+    }
+
+
+    private WorkExperienceDTO workExperienceModel = new WorkExperienceDTO();
+    private List<WorkExperience> workExperiences = new List<WorkExperience>();
+
+    private List<SystemConfigurationDTO> employmentTypes = new List<SystemConfigurationDTO>();
+
+    private bool isCheckingAuth = true;
+    private bool showSuccessMessage = false;
+    private bool showErrorMessage = false;
+    private string successMessage = "";
+    private string errorMessage = "";
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private bool isDeleting = false;
+    private int deletingId = 0;
+    private bool isAuthenticated = false;
+    private string currentUserEmail = "";
+    private int currentUserId = 0;
+
+    private List<QuestionViewModel> Questions = new();
+
+
+    private HttpClient Http => ClientFactory.CreateClient("LocalAPI");
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            Console.WriteLine($"Is Authenticated: {authState.User.Identity?.IsAuthenticated}");
+            Console.WriteLine($"Claims: {string.Join(",", authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+
+
+            Console.WriteLine("OnAfterRenderAsync: firstRender -> Load session info");
+            var sessionInfo = await SessionService.GetSessionInfoAsync();
+            Console.WriteLine($"Session Info - IsUser: {sessionInfo.IsUser}, Email: {sessionInfo.UserEmail}, UserId: {sessionInfo.UserId}");
+
+
+            await CheckAuthenticationAndLoadData();
+            isCheckingAuth = false;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var activeQuestions = await Http.GetFromJsonAsync<List<QuestionViewModel>>("api/Question/active");
+
+        var savedAnswers = await LoadUserAnswersAsync();
+
+        Questions = activeQuestions.Select(q => new QuestionViewModel
+        {
+            Id = q.Id,
+            Text = q.Text,
+            MaxWords = q.MaxWords,
+            IsRequired = q.IsRequired,
+            IsActive = q.IsActive,
+            UserId = currentUserId.ToString(),
+            Answer = savedAnswers.ContainsKey(q.Id) ? savedAnswers[q.Id].Answer : "",
+            IsSaved = savedAnswers.ContainsKey(q.Id),
+            LastUpdated = savedAnswers.ContainsKey(q.Id) ? savedAnswers[q.Id].LastUpdated : null,
+            Order = q.Order
+        }).ToList();
+    }
+
+    private async Task CheckAuthenticationAndLoadData()
+    {
+        try
+        {
+            Console.WriteLine("=== Step3Page: Starting authentication check ===");
+
+
+            await Task.Delay(100);
+
+
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+
+            Console.WriteLine($"Step3Page - AuthState IsAuthenticated: {user.Identity?.IsAuthenticated}");
+            Console.WriteLine($"Step3Page - AuthState Name: '{user.Identity?.Name}'");
+            Console.WriteLine($"Step3Page - AuthState AuthenticationType: '{user.Identity?.AuthenticationType}'");
+            Console.WriteLine($"Step3Page - User.IsInRole('User'): {user.IsInRole("User")}");
+            Console.WriteLine($"Step3Page - All Claims: {string.Join(", ", user.Claims.Select(c => $"{c.Type}:{c.Value}"))}");
+
+
+            isAuthenticated = user.Identity?.IsAuthenticated == true && user.IsInRole("User");
+            Console.WriteLine($"Step3Page - Final isAuthenticated: {isAuthenticated}");
+
+
+            if (isAuthenticated)
+            {
+                currentUserEmail = user.Identity.Name ?? "";
+
+
+                var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out int userId))
+                {
+                    currentUserId = userId;
+                    Console.WriteLine($"Step3Page - User ID from claims: {currentUserId}");
+                    await LoadInitialData();
+                    await InitializeQuestionsAsync();
+                }
+                else
+                {
+                    Console.WriteLine("Step3Page - Failed to get user ID from claims");
+
+
+                    var sessionInfo = await SessionService.GetSessionInfoAsync();
+                    if (sessionInfo.IsUser && sessionInfo.UserId.HasValue)
+                    {
+                        currentUserId = sessionInfo.UserId.Value;
+                        currentUserEmail = sessionInfo.UserEmail;
+                        Console.WriteLine($"Step3Page - User ID from session: {currentUserId}");
+                        await LoadInitialData();
+                        await InitializeQuestionsAsync();
+                    }
+                    else
+                    {
+                        errorMessage = "Unable to retrieve user ID. Please login again.";
+                        showErrorMessage = true;
+                        isAuthenticated = false;
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Step3Page - User not authenticated or not in User role");
+
+
+                var sessionInfo = await SessionService.GetSessionInfoAsync();
+                Console.WriteLine($"SessionService fallback check - IsUser: {sessionInfo.IsUser}, Email: '{sessionInfo.UserEmail}', UserId: {sessionInfo.UserId}");
+
+
+                if (sessionInfo.IsUser)
+                {
+                    Console.WriteLine("SessionService shows user is logged in, but AuthProvider doesn't. Forcing auth refresh...");
+                    if (AuthProvider is CustomAuthStateProvider customProvider)
+                    {
+                        await customProvider.RefreshStateAsync();
+                        await Task.Delay(100);
+                        authState = await AuthProvider.GetAuthenticationStateAsync();
+                        user = authState.User;
+                        isAuthenticated = user.Identity?.IsAuthenticated == true && user.IsInRole("User");
+
+
+                        Console.WriteLine($"After forced refresh - isAuthenticated: {isAuthenticated}");
+
+
+                        if (isAuthenticated && sessionInfo.UserId.HasValue)
+                        {
+                            currentUserId = sessionInfo.UserId.Value;
+                            currentUserEmail = sessionInfo.UserEmail;
+                            await LoadInitialData();
+                            await InitializeQuestionsAsync();
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception in CheckAuthenticationAndLoadData: {ex}");
+            errorMessage = $"Authentication error: {ex.Message}";
+            showErrorMessage = true;
+            isAuthenticated = false;
+        }
+        finally
+        {
+            isLoading = false;
+            Console.WriteLine($"=== Step3Page: Final state - isAuthenticated: {isAuthenticated}, currentUserId: {currentUserId} ===");
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadInitialData()
+    {
+        try
+        {
+            var employmentTypeTask = Http.GetFromJsonAsync<List<SystemConfigurationDTO>>("api/SystemConfiguration/type/EmploymentType/active");
+            await Task.WhenAll(employmentTypeTask);
+
+            employmentTypes = employmentTypeTask.Result ?? new List<SystemConfigurationDTO>();
+            await LoadWorkExperiences();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load data: {ex.Message}";
+            showErrorMessage = true;
+        }
+    }
+
+    private async Task LoadWorkExperiences()
+    {
+        try
+        {
+            if (currentUserId > 0)
+            {
+                workExperiences = await Http.GetFromJsonAsync<List<WorkExperience>>($"api/WorkExperience/user/{currentUserId}")
+                             ?? new List<WorkExperience>();
+            }
+            else
+            {
+                workExperiences = new List<WorkExperience>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LoadWorkExperiences failed: {ex.Message}");
+            workExperiences = new List<WorkExperience>();
+        }
+    }
+
+    private async Task InitializeQuestionsAsync()
+    {
+        try
+        {
+            Console.WriteLine($"Initializing questions for user {currentUserId}");
+
+            var questionsWithAnswers = await LoadQuestionsWithAnswersAsync();
+
+            if (questionsWithAnswers != null && questionsWithAnswers.Any())
+            {
+                Questions = questionsWithAnswers.Select(q => new QuestionViewModel
+                {
+                    Id = q.Id,
+                    Text = q.Text,
+                    Answer = q.Answer,
+                    MaxWords = q.MaxWords,
+                    IsActive = true,
+                    HasError = false,
+                    UserId = currentUserId.ToString(),
+                    LastUpdated = q.AnswerUpdatedAt,
+                    IsSaved = q.IsSaved,
+                    IsRequired = q.IsRequired,
+                    Order = q.Order
+                }).ToList();
+
+
+                Console.WriteLine($"Loaded {Questions.Count} questions from API");
+            }
+            else
+            {
+                Console.WriteLine("API call failed, loading default questions");
+                await OnInitializedAsync();
+            }
+
+
+            SetActiveQuestions();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing questions: {ex.Message}");
+            await OnInitializedAsync();
+            SetActiveQuestions();
+        }
+    }
+
+    private async Task<List<QuestionWithAnswerDTO>?> LoadQuestionsWithAnswersAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/UserQuestionAnswer/questions-with-answers");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<QuestionWithAnswerDTO>>();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Session expired. Please login again.";
+                showErrorMessage = true;
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login", forceLoad: true);
+                return null;
+            }
+            else
+            {
+                Console.WriteLine($"API call failed with status: {response.StatusCode}");
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading questions with answers: {ex.Message}");
+            return null;
+        }
+    }
+
+    // private bool ShouldQuestionBeActive(int order)
+    // {
+    //     return order <= 3;
+    // }
+
+    private void SetActiveQuestions()
+    {
+        var questionsWithoutActiveState = Questions.Where(q => !q.IsActive).ToList();
+        var questionsToActivate = questionsWithoutActiveState.Take(Math.Max(0, 3 - Questions.Count(q => q.IsActive))).ToList();
+
+        foreach (var question in questionsToActivate)
+        {
+            question.IsActive = true;
+        }
+    }
+
+    private async Task<Dictionary<int, QuestionViewModel>> LoadUserAnswersAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/UserQuestionAnswer/my-answers");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var answers = await response.Content.ReadFromJsonAsync<List<UserQuestionAnswerDTO>>();
+
+                if (answers != null)
+                {
+                    return answers.ToDictionary(
+                        a => a.QuestionId,
+                        a => new QuestionViewModel
+                        {
+                            Answer = a.Answer,
+                            LastUpdated = a.UpdatedAt
+                        }
+                    );
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Session expired. Please login again.";
+                showErrorMessage = true;
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                Console.WriteLine($"Failed to load user answers: {response.StatusCode}");
+            }
+
+
+            return new Dictionary<int, QuestionViewModel>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user answers: {ex.Message}");
+            return new Dictionary<int, QuestionViewModel>();
+        }
+    }
+
+    private void OnInputChange(QuestionViewModel question, string? value)
+    {
+        question.Answer = value ?? "";
+        question.HasError = false;
+        question.IsSaved = false;
+        question.LastUpdated = DateTime.Now;
+
+        if (!string.IsNullOrWhiteSpace(question.Answer) && !IsWordCountExceeded(question))
+        {
+            ActivateNextQuestion(question);
+        }
+
+
+        StateHasChanged();
+    }
+
+    private void ActivateNextQuestion(QuestionViewModel currentQuestion)
+    {
+        var currentIndex = Questions.FindIndex(q => q.Id == currentQuestion.Id);
+        var nextIndex = currentIndex + 1;
+
+
+        if (nextIndex < Questions.Count && !Questions[nextIndex].IsActive)
+        {
+            Questions[nextIndex].IsActive = true;
+        }
+    }
+
+    private int GetWordCount(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return 0;
+
+
+        return text.Trim().Split(new char[] { ' ', '\t', '\n', '\r' },
+            StringSplitOptions.RemoveEmptyEntries).Length;
+    }
+
+    private bool IsWordCountExceeded(QuestionViewModel question)
+    {
+        return GetWordCount(question.Answer) > question.MaxWords;
+    }
+
+    private string GetValidationClass(QuestionViewModel question)
+    {
+        if (question.HasError || IsWordCountExceeded(question))
+            return "error";
+        return "";
+    }
+
+    private bool ValidateActiveQuestions()
+    {
+        bool isValid = true;
+
+
+        foreach (var question in Questions.Where(q => q.IsActive))
+        {
+            if (string.IsNullOrWhiteSpace(question.Answer))
+            {
+                question.HasError = true;
+                isValid = false;
+            }
+            else if (IsWordCountExceeded(question))
+            {
+                isValid = false;
+            }
+        }
+
+
+        return isValid;
+    }
+
+    private bool CanProceedNext()
+    {
+        var activeQuestions = Questions.Where(q => q.IsActive).ToList();
+
+
+        return activeQuestions.All(q =>
+            !string.IsNullOrWhiteSpace(q.Answer) &&
+            !IsWordCountExceeded(q)
+        );
+    }
+
+    private async Task SaveQuestionsAsync()
+    {
+        try
+        {
+            var questionsToSave = Questions.Where(q => q.IsActive && !string.IsNullOrWhiteSpace(q.Answer)).ToList();
+
+
+            if (questionsToSave.Any())
+            {
+                var saveRequests = questionsToSave.Select(q => new UserQuestionAnswerCreateDTO
+                {
+                    QuestionId = q.Id,
+                    Answer = q.Answer
+                }).ToList();
+
+
+                var response = await Http.PostAsJsonAsync("api/UserQuestionAnswer/save-multiple", saveRequests);
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var savedAnswers = await response.Content.ReadFromJsonAsync<List<UserQuestionAnswerDTO>>();
+
+
+                    foreach (var question in questionsToSave)
+                    {
+                        question.IsSaved = true;
+                        question.LastUpdated = DateTime.Now;
+                    }
+
+
+                    Console.WriteLine($"Successfully saved {questionsToSave.Count} answers for user {currentUserId}");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    errorMessage = "Session expired. Please login again.";
+                    showErrorMessage = true;
+                    await Task.Delay(2000);
+                    Navigation.NavigateTo("/login", forceLoad: true);
+                    return;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"API Error: {errorContent}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving questions: {ex.Message}");
+            throw;
+        }
+    }
+
+    private async Task AddWorkExperience()
+    {
+        if (isSubmitting || !isAuthenticated) return;
+
+
+        isSubmitting = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/WorkExperience", workExperienceModel);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Work experience record added successfully!";
+                showSuccessMessage = true;
+                showErrorMessage = false;
+
+
+                workExperienceModel = new WorkExperienceDTO();
+
+
+                await LoadWorkExperiences();
+                _ = Task.Delay(3000).ContinueWith(_ =>
+                {
+                    showSuccessMessage = false;
+                    InvokeAsync(StateHasChanged);
+                });
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Session expired. Please login again.";
+                showErrorMessage = true;
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Failed to add work experience: {errorContent}";
+                showErrorMessage = true;
+                showSuccessMessage = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding work experience: {ex.Message}";
+            showErrorMessage = true;
+            showSuccessMessage = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteWorkExperience(int workExperienceId)
+    {
+        if (isDeleting || !isAuthenticated) return;
+
+
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            "Are you sure you want to delete this work experience record?");
+
+
+        if (!confirmed) return;
+
+
+        isDeleting = true;
+        deletingId = workExperienceId;
+
+
+        try
+        {
+            var response = await Http.DeleteAsync($"api/WorkExperience/{workExperienceId}");
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Work Experience record deleted successfully!";
+                showSuccessMessage = true;
+                showErrorMessage = false;
+
+
+                workExperiences.RemoveAll(e => e.Id == workExperienceId);
+
+
+                _ = Task.Delay(3000).ContinueWith(_ =>
+                {
+                    showSuccessMessage = false;
+                    InvokeAsync(StateHasChanged);
+                });
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Session expired. Please login again.";
+                showErrorMessage = true;
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Failed to delete work experience: {errorContent}";
+                showErrorMessage = true;
+                showSuccessMessage = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting work experience: {ex.Message}";
+            showErrorMessage = true;
+            showSuccessMessage = false;
+        }
+        finally
+        {
+            isDeleting = false;
+            deletingId = 0;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveAndNext()
+    {
+        if (!ValidateActiveQuestions())
+        {
+            errorMessage = "Please complete all required fields before proceeding.";
+            showErrorMessage = true;
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            isSubmitting = true;
+            StateHasChanged();
+
+
+            await SaveQuestionsAsync();
+
+
+            successMessage = "Personal perspective answers saved successfully!";
+            showSuccessMessage = true;
+            showErrorMessage = false;
+            StateHasChanged();
+
+
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/step4");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving answers: {ex.Message}";
+            showErrorMessage = true;
+            showSuccessMessage = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task PreviousStep()
+    {
+        var answeredQuestions = Questions.Where(q => !string.IsNullOrWhiteSpace(q.Answer)).ToList();
+        if (answeredQuestions.Any())
+        {
+            try
+            {
+                await SaveQuestionsAsync();
+                successMessage = "Answers auto-saved successfully!";
+                showSuccessMessage = true;
+                StateHasChanged();
+                await Task.Delay(1000);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Auto-save failed: {ex.Message}");
+            }
+        }
+
+        Navigation.NavigateTo("/step2");
+    }
+
+    private string GetEmploymentTypeName(string employmentTypeCode)
+    {
+        return employmentTypes.FirstOrDefault(u => u.Code == employmentTypeCode)?.DisplayName ?? "Unknown";
+    }
+
+    private async Task ManualSave()
+    {
+        try
+        {
+            isSubmitting = true;
+            StateHasChanged();
+
+
+            await SaveQuestionsAsync();
+
+
+            successMessage = "Answers saved successfully!";
+            showSuccessMessage = true;
+            showErrorMessage = false;
+
+            _ = Task.Delay(3000).ContinueWith(_ =>
+            {
+                showSuccessMessage = false;
+                InvokeAsync(StateHasChanged);
+            });
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving answers: {ex.Message}";
+            showErrorMessage = true;
+            showSuccessMessage = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}
+
+

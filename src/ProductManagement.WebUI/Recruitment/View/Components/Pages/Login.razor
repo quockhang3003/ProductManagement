@@ -1,0 +1,122 @@
+﻿@page "/login"
+@using Domain.DTO
+@using Microsoft.AspNetCore.Components.Authorization
+@using Service
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject CookieService CookieService
+@inject IJSRuntime JS
+@inject SessionTimerService SessionTimerService
+@inject APIClient APIClient
+@rendermode InteractiveServer
+
+<EditForm Model="loginModel" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <section class="vh-100">
+        <div class="container-fluid h-custom">
+            <div class="row d-flex h-100">
+                <div class="col-md-5 col-lg-5 col-xl-5">
+                    <div class="mb-3">
+                        <h5 class="fw-bold kpmg-header m-2">Login or Sign up here</h5>
+                        <div class="border p-1" id="bg-login">
+                            <div class="row mb-1 align-items-center ">
+                                <label class="col-sm-5 col-form-label text-end pe-2 fw-bold">Email</label>
+                                <div class="col-sm-7">
+                                    <InputText @bind-Value="loginModel.Email" class="form-control form-control-sm" id="custom-input-login" />
+                                    <ValidationMessage For="@(() => loginModel.Email)" />
+                                </div>
+                            </div>
+                            <div class="row mb-1 align-items-center">
+                                <label class="col-sm-5 col-form-label text-end pe-2 fw-bold">ID Card/Passport No</label>
+                                <div class="col-sm-7">
+                                    <InputText type="password" @bind-Value="loginModel.Password" class="form-control form-control-sm" id="custom-input-login" />
+                                    <ValidationMessage For="@(() => loginModel.Password)" />
+                                </div>
+                            </div>
+                            <div class="text-center text-lg-start">
+                                <div class="row">
+                                    <div class="col-sm-5"></div>
+                                    <div class="d-flex gap-3 flex-wrap col-sm-7">
+                                        <button type="submit" class="btn px-3 fw-bold btn custom-btn1 custom-header">
+                                            Login
+                                        </button>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(error))
+                                    {
+                                        <div class="alert alert-danger mt-2">@error</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</EditForm>
+
+@code {
+    private LoginDTO loginModel = new();
+    private string error = "";
+    private HttpClient Http => ClientFactory.CreateClient("LocalAPI");
+
+    private async Task HandleValidSubmit()
+    {
+        error = "";
+        try
+        {
+            var rUser = await APIClient.PostAsJsonAsync("api/User/login",
+                new { Email = loginModel.Email, Password = loginModel.Password });
+            var rAdmin = default(HttpResponseMessage);
+
+            if (!rUser.IsSuccessStatusCode)
+            {
+                rAdmin = await APIClient.PostAsJsonAsync("api/Admin/login",
+                    new { Email = loginModel.Email, Password = loginModel.Password });
+            }
+
+            if (rUser.IsSuccessStatusCode || (rAdmin != null && rAdmin.IsSuccessStatusCode))
+            {
+                bool isAdmin = rAdmin != null && rAdmin.IsSuccessStatusCode;
+                var loginResponse = await (isAdmin
+                    ? rAdmin.Content.ReadFromJsonAsync<SessionInfoDTO>()
+                    : rUser.Content.ReadFromJsonAsync<SessionInfoDTO>());
+
+                var role = isAdmin ? "Admin" : "User";
+                var id = isAdmin ? loginResponse.AdminId?.ToString() : loginResponse.UserId?.ToString();
+
+                var authProvider = (CustomAuthStateProvider)AuthStateProvider;
+                await authProvider.NotifyLoginAsync(loginModel.Email, role, id);
+
+                try
+                {
+                    await JS.InvokeVoidAsync("localStorage.setItem", "isLoggedIn", "true");
+                    Console.WriteLine("[Login] Set isLoggedIn to true");
+                    SessionTimerService.StartSession();
+                    await JS.InvokeVoidAsync("sessionManager.start", 10, 1);
+                    Console.WriteLine("[Login] sessionManager.start called");
+                    await CookieService.SaveUserEmailToCookie(loginModel.Email);
+                    Console.WriteLine("[Login] All initialization successful");
+                }
+                catch (Exception jsEx)
+                {
+                    Console.WriteLine($"[Login] JS initialization error: {jsEx.Message}");
+                }
+
+                // Xóa forceLoad: true
+                Navigation.NavigateTo(isAdmin ? "/admin/candidate-management" : "/step1");
+                return;
+            }
+
+            error = "Sai tài khoản hoặc mật khẩu.";
+        }
+        catch (Exception ex)
+        {
+            error = "Lỗi hệ thống: " + ex.Message;
+            Console.WriteLine($"[Login] Error: {ex}");
+        }
+    }
+
+}

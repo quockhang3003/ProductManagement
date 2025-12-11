@@ -1,0 +1,87 @@
+/ProductManagement.sln
+# ============================================
+# .NET Core / ASP.NET – SAFE SECURITY GRADE
+# Ignore ALL sensitive configs & local settings
+# ============================================
+
+# === Sensitive Config Files ===
+appsettings.json
+appsettings.*.json
+*.Development.json
+*.Local.json
+*.Secret.json
+*.secret.json
+*.env
+.env.*
+secrets.json
+*.psafe3
+*.vault
+
+# === Sensitive Keys & Certificates ===
+*.key
+*.pem
+*.pfx
+*.cer
+*.crt
+*.jwk
+*.keystore
+certs/
+keys/
+secrets/
+
+# === Connection Strings / Private Settings ===
+conn.*
+connection.*
+config.local.json
+*.config.local
+*.config.secret
+*.credentials
+credentials.json
+
+# === Logs & Temp Files ===
+logs/
+*.log
+*.tmp
+*.temp
+*.cache
+
+# === Build artifacts ===
+bin/
+obj/
+out/
+publish/
+dist/
+debug/
+release/
+
+# === User-specific files ===
+.vscode/
+.vs/
+.idea/
+*.user
+*.suo
+*.rsuser
+
+# === System files ===
+Thumbs.db
+.DS_Store
+
+# === Docker Secrets ===
+docker-secret/
+docker-secrets/
+*.env.docker
+.env.docker.local
+
+# === Security Tools ===
+*.snk
+*.p12
+
+# === EF Core Migrations Backups ===
+*.bak
+*.sql.bak
+
+# === Node artifacts (if using front-end) ===
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log

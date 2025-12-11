@@ -1,0 +1,258 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Service
+@using View.Components.Pages
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IHttpClientFactory ClientFactory
+@inject SessionService SessionService
+@inject NavigationManager Navigation
+@inject CookieService CookieService
+@inject IJSRuntime JS
+@inject Service.SessionTimerService SessionTimer
+@inject APIClient _api
+<div class="row" id="bg-kpmgheader">
+    <div class="col-md-4">
+        <a><img src="/images/KPMG_Logo_White.svg" alt="logo KPMG" id="kpmg-logo"/></a>
+    </div>
+    <div class="col-md-8 text-center">
+        <div class="dropdown">
+            <button class="dropbtn">Application</button>
+            <div class="dropdown-content fs-custom">
+                <NavLink class="nav-link mb-3" href="step1">
+                    <span aria-hidden="true"></span> Create Application
+                </NavLink>
+                <NavLink class="nav-link" href="login">
+                    <span aria-hidden="true"></span> My Application
+                </NavLink>
+            </div>
+        </div>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <div class="dropdown">
+                    <button class="dropbtn">Admin</button>
+                    <div class="dropdown-content fs-custom">
+                        <NavLink class="nav-link mb-3" href="admin/candidate-management">
+                            <span aria-hidden="true"></span> Candidate Management
+                        </NavLink>
+                        <NavLink class="nav-link mb-3" href="admin/system-configuration">
+                            <span aria-hidden="true"></span> System Configuration
+                        </NavLink>
+                        <NavLink class="nav-link mb-3" href="admin/collections-management">
+                            <span aria-hidden="true"></span> Collections Management
+                        </NavLink>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+<div>
+    <img src="/images/banner-recruit-2026.png"/>
+</div>
+<div class="page">
+    @* <div class="sidebar-custom col-sm-2 bg-light">
+        <NavMenu />
+    </div> *@
+    <main class="mt-3">
+        <div class="clearfix">
+            <div class="px-4">
+                <span class="float-end">
+                    <AuthorizeView Roles="Admin">
+                        <Authorized Context="context">
+                            <span>Welcome, Admin: <strong>@context.User.Identity?.Name</strong></span>
+                            <span> | </span>
+                            <button class="btn btn-link p-0 fw-bold" @onclick="LogoutAdmin">Logout</button>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="User">
+                        <Authorized Context="context">
+                            <span>Welcome, <strong>@context.User.Identity?.Name</strong></span>
+                            <span> | Submit on: @DateTime.Now.ToString("dd MMM yyyy HH:mm:ss")</span>
+                            <span> | </span>
+                            <button class="btn btn-link p-0 fw-bold" @onclick="LogoutUser">Logout</button>
+                        </Authorized>
+                    </AuthorizeView>
+
+                </span>
+            </div>
+        </div>
+        <div id="session-timeout-modal" class="session-modal">
+            <div class="session-modal-content">
+                <div class="session-modal-header">
+                    <h3>Session Timed out</h3>
+                </div>
+                <div class="session-modal-body">
+                    <p class="mb-4">Your session is about to expire.</p>
+                    <p>If you have any unsaved data, close this message and copy the data before logging in again. If not, please log in again now.</p>
+                </div>
+                <br />
+                <div class="session-modal-footer d-flex justify-content-end">
+                    <button class="btn btn-primary" @onclick="KeepWorking">Keep Working</button>
+                    <button class="btn btn-secondary" @onclick="Logout">Close</button>
+                </div>
+            </div>
+        </div>
+        <article class="content px-4 fs-custom">
+            @Body
+        </article>
+    </main>
+</div>
+<footer class="footer-bg">
+    <div class="row">
+        <div class="col-md-6 fs-custom" id="textl-ft">
+            <span>For further information or if you have any questions please do not hesitate contact us.</span>
+        </div>
+        <div class="text-end col-md-6">
+            <h6 id="textr-ft">Contacts</h6>
+            <h6 id="yellow-cts">VN-FM HCM Admin</h6>
+        </div>
+    </div>
+</footer>
+@code {
+    private DotNetObjectReference<MainLayout>? _dotnetRef;
+    private bool _jsInited = false;
+
+    private HttpClient Http => ClientFactory.CreateClient("LocalAPI");
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; }
+
+    [Inject] private AuthenticationStateProvider AuthProvider { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _dotnetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("sessionManager.init", _dotnetRef);
+                _jsInited = true;
+                Console.WriteLine("[MainLayout] sessionManager initialized");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MainLayout] Error initializing sessionManager: {ex.Message}");
+            }
+        }
+    }
+
+
+    private async Task LogoutUser()
+    {
+        SessionTimer.StopSession();
+        await Http.PostAsync("api/User/logout", null);
+
+        await SessionService.LogoutUserAsync();
+
+        await CookieService.ClearCookieAsync("userEmail");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "isLoggedIn");
+        await JS.InvokeVoidAsync("sessionManager.stop");
+        if (AuthStateProvider is CustomAuthStateProvider custom)
+            await custom.NotifyLogoutAsync("User");
+
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+
+    private async Task LogoutAdmin()
+    {
+        SessionTimer.StopSession();
+        await Http.PostAsync("api/Admin/logout", null);
+        await SessionService.LogoutAdminAsync();
+        await CookieService.ClearCookieAsync("adminUsername");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "isLoggedIn");
+        await JS.InvokeVoidAsync("sessionManager.stop");
+        if (AuthStateProvider is CustomAuthStateProvider custom)
+            await custom.NotifyLogoutAsync("Admin");
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    [JSInvokable("ResetSessionAsync")]
+    public async Task ResetSessionAsync()
+    {
+        SessionTimer.ResetSession();
+        Console.WriteLine($"[C#] ResetSessionAsync invoked at {DateTime.Now:HH:mm:ss}");
+    }
+
+    [JSInvokable("LogoutNowAsync")]
+    public async Task LogoutNowAsync()
+    {
+        try
+        {
+            SessionTimer.StopSession();
+            Console.WriteLine($"[C#] LogoutNowAsync invoked at {DateTime.Now:HH:mm:ss}");
+
+            try
+            {
+                await JS.InvokeVoidAsync("localStorage.removeItem", "isLoggedIn");
+                await CookieService.ClearCookieAsync("userEmail");
+                await CookieService.ClearCookieAsync("adminUsername");
+                await JS.InvokeVoidAsync("sessionManager.stop");
+            }
+            catch (JSDisconnectedException)
+            {
+                Console.WriteLine("[MainLayout] JSInterop failed due to circuit disconnect, skipping JS calls");
+            }
+
+            if (AuthStateProvider is CustomAuthStateProvider custom)
+            {
+                var authState = await AuthStateTask;
+                var role = authState.User.IsInRole("Admin") ? "Admin" : "User";
+                await custom.NotifyLogoutAsync(role);
+            }
+
+            try
+            {
+                await Http.PostAsync("api/User/logout", null);
+                await Http.PostAsync("api/Admin/logout", null);
+            }
+            catch
+            {
+                Console.WriteLine("[MainLayout] Logout API call failed, proceeding to navigate");
+            }
+
+            try
+            {
+                
+                Navigation.NavigateTo("/login");
+            }
+            catch (JSDisconnectedException)
+            {
+                Console.WriteLine("[MainLayout] Navigation failed due to circuit disconnect, forcing client-side redirect");
+                await JS.InvokeVoidAsync("window.location.assign", "/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MainLayout] LogoutNowAsync error: {ex.Message}");
+            await JS.InvokeVoidAsync("window.location.assign", "/login");
+        }
+    }
+   
+    private async Task KeepWorking()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("sessionManager.keepWorking");
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MainLayout] KeepWorking error: {ex.Message}");
+        }
+    }
+
+    private async Task Logout()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("sessionManager.closeSession");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MainLayout] Logout error: {ex.Message}");
+        }
+    }
+
+}
